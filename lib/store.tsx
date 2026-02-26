@@ -79,11 +79,16 @@ async function loadDefaultProject(): Promise<ProjectData | null> {
   }
 }
 
+type SaveResult =
+  | { kind: "ok"; data: ProjectData }
+  | { kind: "conflict"; currentUpdatedAt: string | null }
+  | { kind: "error" }
+
 async function saveToServer(
   data: ProjectData,
   expectedServerUpdatedAt?: string | null,
-): Promise<ProjectData | null> {
-  if (typeof window === "undefined") return null
+): Promise<SaveResult> {
+  if (typeof window === "undefined") return { kind: "error" }
   try {
     const headers: Record<string, string> = {
       "content-type": "application/json",
@@ -100,15 +105,23 @@ async function saveToServer(
     })
     if (res.status === 409) {
       console.warn("Failed to save annotations: conflict (409)")
-      return null
+      const body = await res.json().catch(() => null)
+      const currentUpdatedAt =
+        body &&
+        typeof body === "object" &&
+        body !== null &&
+        typeof (body as { currentUpdatedAt?: unknown }).currentUpdatedAt === "string"
+          ? (body as { currentUpdatedAt: string }).currentUpdatedAt
+          : null
+      return { kind: "conflict", currentUpdatedAt }
     }
     if (!res.ok) {
       console.warn("Failed to save annotations:", res.status)
-      return null
+      return { kind: "error" }
     }
-    return normalizeProjectData((await res.json()) as ProjectData)
+    return { kind: "ok", data: normalizeProjectData((await res.json()) as ProjectData) }
   } catch {
-    return null
+    return { kind: "error" }
   }
 }
 
@@ -214,18 +227,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (isInitialMount.current || isSyncingFromServer.current) return
     const timer = setTimeout(() => {
       void (async () => {
-        const saved = await saveToServer(
+        const localUpdated = toMillis(state.updatedAt)
+        const serverUpdated = toMillis(lastServerUpdateAt.current)
+        if (localUpdated <= serverUpdated) return
+
+        const result = await saveToServer(
           state,
           lastServerUpdateAt.current ?? state.updatedAt,
         )
-        if (saved) {
-          applyRemoteData(saved)
-          lastServerUpdateAt.current = saved.updatedAt
+        if (result.kind === "ok") {
+          applyRemoteData(result.data)
+          lastServerUpdateAt.current = result.data.updatedAt
+          return
+        }
+        if (result.kind === "conflict") {
+          if (result.currentUpdatedAt) {
+            lastServerUpdateAt.current = result.currentUpdatedAt
+          }
+          await syncFromServer()
         }
       })()
     }, 500)
     return () => clearTimeout(timer)
-  }, [applyRemoteData, state])
+  }, [applyRemoteData, state, syncFromServer])
 
   useEffect(() => {
     let isCancelled = false
@@ -239,10 +263,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         lastServerUpdateAt.current = data.updatedAt
       } else if (!isCancelled && !data) {
         // no server file yet: seed it from local data (or an empty project)
-        const saved = await saveToServer(localData || createEmptyProject())
-        if (saved) {
-          applyRemoteData(saved)
-          lastServerUpdateAt.current = saved.updatedAt
+        const result = await saveToServer(localData || createEmptyProject())
+        if (result.kind === "ok") {
+          applyRemoteData(result.data)
+          lastServerUpdateAt.current = result.data.updatedAt
         }
       } else if (!isCancelled && localData) {
         // no server response: keep local as source of truth for now
