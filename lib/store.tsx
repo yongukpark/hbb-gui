@@ -86,14 +86,15 @@ type SaveResult =
 
 async function saveToServer(
   data: ProjectData,
+  expectedUpdatedAt: string | null,
 ): Promise<SaveResult> {
   if (typeof window === "undefined") return { kind: "error" }
   try {
     const headers: Record<string, string> = {
       "content-type": "application/json",
     }
-    if (data.updatedAt) {
-      headers["if-match-updated-at"] = data.updatedAt
+    if (expectedUpdatedAt) {
+      headers["if-match-updated-at"] = expectedUpdatedAt
     }
 
     const res = await fetch("/api/annotations", {
@@ -163,7 +164,7 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
     }
     case "IMPORT_DATA": {
       rebuildTagColorMap(action.data.tags)
-      return { ...action.data, updatedAt: action.data.updatedAt || now }
+      return { ...action.data, updatedAt: now, createdAt: action.data.createdAt || now }
     }
     case "RESET": {
       rebuildTagColorMap([])
@@ -229,7 +230,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const serverUpdated = toMillis(lastServerUpdateAt.current)
         if (localUpdated <= serverUpdated) return
 
-        const result = await saveToServer(state)
+        const result = await saveToServer(state, lastServerUpdateAt.current)
         if (result.kind === "ok") {
           applyRemoteData(result.data)
           lastServerUpdateAt.current = result.data.updatedAt
@@ -258,7 +259,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         lastServerUpdateAt.current = data.updatedAt
       } else if (!isCancelled && !data) {
         // no server file yet: seed it from local data (or an empty project)
-        const result = await saveToServer(localData || createEmptyProject())
+        const result = await saveToServer(localData || createEmptyProject(), null)
         if (result.kind === "ok") {
           applyRemoteData(result.data)
           lastServerUpdateAt.current = result.data.updatedAt

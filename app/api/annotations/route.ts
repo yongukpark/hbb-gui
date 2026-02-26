@@ -6,7 +6,10 @@ import { list, put } from "@vercel/blob"
 export const dynamic = "force-dynamic"
 export const revalidate = 0
 
-const FILE_PATH = path.join(process.cwd(), "public", "data", "head-annotations.json")
+const FILE_PATH =
+  process.env.ANNOTATIONS_FILE_PATH?.trim() ||
+  path.join(process.cwd(), ".data", "head-annotations.json")
+const LEGACY_FILE_PATH = path.join(process.cwd(), "public", "data", "head-annotations.json")
 const BLOB_PATH = "data/head-annotations.json"
 const IS_PRODUCTION = process.env.NODE_ENV === "production"
 const EXTERNAL_SYNC_URL = process.env.EXTERNAL_SYNC_URL?.trim() || ""
@@ -132,7 +135,16 @@ async function readFromLocalFile(): Promise<string | null> {
     return await fs.readFile(FILE_PATH, "utf8")
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code
-    if (code === "ENOENT") return null
+    if (code === "ENOENT") {
+      try {
+        // Backward compatibility for previously persisted dev data.
+        return await fs.readFile(LEGACY_FILE_PATH, "utf8")
+      } catch (legacyErr) {
+        const legacyCode = (legacyErr as NodeJS.ErrnoException).code
+        if (legacyCode === "ENOENT") return null
+        throw legacyErr
+      }
+    }
     throw err
   }
 }
