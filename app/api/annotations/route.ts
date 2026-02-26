@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
+import crypto from "crypto"
 import { list, put } from "@vercel/blob"
 
 const FILE_PATH = path.join(process.cwd(), "public", "data", "head-annotations.json")
 const BLOB_PATH = "data/head-annotations.json"
+const IS_PRODUCTION = process.env.NODE_ENV === "production"
 
 async function ensureFile() {
   const dir = path.dirname(FILE_PATH)
@@ -13,6 +15,67 @@ async function ensureFile() {
 
 function hasBlobToken() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN)
+}
+
+function constantTimeEqual(a: string, b: string) {
+  const aBuf = Buffer.from(a)
+  const bBuf = Buffer.from(b)
+  if (aBuf.length !== bBuf.length) return false
+  return crypto.timingSafeEqual(aBuf, bBuf)
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value)
+}
+
+function isValidProjectData(value: unknown): boolean {
+  if (!isRecord(value)) return false
+  const { modelName, numLayers, numHeads, annotations, tags, createdAt } = value
+  if (typeof modelName !== "string") return false
+  if (typeof numLayers !== "number" || typeof numHeads !== "number") return false
+  if (!isRecord(annotations)) return false
+  if (!Array.isArray(tags) || !tags.every((tag) => typeof tag === "string")) return false
+  if (typeof createdAt !== "string") return false
+  return true
+}
+
+function getIfMatch(req: Request): string | null {
+  const raw = req.headers.get("if-match")
+  if (!raw) return null
+  return raw.replaceAll('"', "").trim() || null
+}
+
+async function readCurrentData(): Promise<Record<string, unknown> | null> {
+  const raw = hasBlobToken()
+    ? (await readFromBlob()) ?? (!IS_PRODUCTION ? await readFromLocalFile() : null)
+    : await readFromLocalFile()
+
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw)
+    return isRecord(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
+function validateWriteToken(req: Request): NextResponse | null {
+  const requiredToken = process.env.ANNOTATIONS_WRITE_TOKEN
+  if (!requiredToken) {
+    if (IS_PRODUCTION) {
+      return NextResponse.json(
+        { error: "server write token is not configured" },
+        { status: 503 },
+      )
+    }
+    return null
+  }
+
+  const clientToken = req.headers.get("x-annotations-token")
+  if (!clientToken || !constantTimeEqual(clientToken, requiredToken)) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
+  }
+  return null
 }
 
 async function readFromLocalFile(): Promise<string | null> {
@@ -55,7 +118,7 @@ async function writeToBlob(payload: unknown) {
 export async function GET() {
   try {
     const raw = hasBlobToken()
-      ? (await readFromBlob()) ?? (await readFromLocalFile())
+      ? (await readFromBlob()) ?? (!IS_PRODUCTION ? await readFromLocalFile() : null)
       : await readFromLocalFile()
     if (!raw) {
       return NextResponse.json({ error: "annotations file not found" }, { status: 404 })
@@ -71,9 +134,25 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
+    const writeTokenError = validateWriteToken(req)
+    if (writeTokenError) return writeTokenError
+
     const data = await req.json()
-    if (!data || typeof data !== "object") {
+    if (!isValidProjectData(data)) {
       return NextResponse.json({ error: "invalid json body" }, { status: 400 })
+    }
+
+    const current = await readCurrentData()
+    const ifMatch = getIfMatch(req)
+    if (ifMatch) {
+      const currentUpdatedAt =
+        current && typeof current.updatedAt === "string" ? current.updatedAt : null
+      if (currentUpdatedAt && currentUpdatedAt !== ifMatch) {
+        return NextResponse.json(
+          { error: "conflict", currentUpdatedAt },
+          { status: 409 },
+        )
+      }
     }
 
     const now = new Date().toISOString()

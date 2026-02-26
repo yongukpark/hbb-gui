@@ -20,7 +20,14 @@ function createEmptyProject(): ProjectData {
 }
 
 const STORAGE_KEY = "pythia-head-naming"
+const WRITE_TOKEN_STORAGE_KEY = "annotations-write-token"
 const SYNC_INTERVAL_MS = 5000
+
+function toMillis(iso: string | null | undefined): number {
+  if (!iso) return 0
+  const ms = Date.parse(iso)
+  return Number.isNaN(ms) ? 0 : ms
+}
 
 function normalizeProjectData(data: ProjectData): ProjectData {
   // Migrate old format: single `description` -> per-tag `descriptions`
@@ -73,12 +80,28 @@ async function loadDefaultProject(): Promise<ProjectData | null> {
 async function saveToServer(data: ProjectData): Promise<ProjectData | null> {
   if (typeof window === "undefined") return null
   try {
+    const writeToken = localStorage.getItem(WRITE_TOKEN_STORAGE_KEY)
+    const headers: Record<string, string> = {
+      "content-type": "application/json",
+    }
+    if (writeToken) {
+      headers["x-annotations-token"] = writeToken
+    }
+    if (data.updatedAt) {
+      headers["if-match"] = data.updatedAt
+    }
+
     const res = await fetch("/api/annotations", {
       method: "PUT",
-      headers: { "content-type": "application/json" },
+      headers,
       body: JSON.stringify(data),
     })
-    if (!res.ok) return null
+    if (res.status === 409) {
+      return null
+    }
+    if (!res.ok) {
+      return null
+    }
     return normalizeProjectData((await res.json()) as ProjectData)
   } catch {
     return null
@@ -152,6 +175,29 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const isSyncingFromServer = useRef(false)
   const lastServerUpdateAt = useRef<string | null>(null)
 
+  const applyRemoteData = useCallback((data: ProjectData) => {
+    isSyncingFromServer.current = true
+    dispatch({ type: "IMPORT_DATA", data })
+    window.setTimeout(() => {
+      isSyncingFromServer.current = false
+    }, 0)
+  }, [dispatch])
+
+  const syncFromServer = useCallback(async (localUpdatedAt: string) => {
+    const remote = await loadDefaultProject()
+    if (!remote) return
+
+    const remoteUpdated = toMillis(remote.updatedAt)
+    const localUpdated = toMillis(localUpdatedAt)
+    const lastSeenRemote = toMillis(lastServerUpdateAt.current)
+
+    if (remoteUpdated > localUpdated && remoteUpdated >= lastSeenRemote) {
+      applyRemoteData(remote)
+    }
+
+    lastServerUpdateAt.current = remote.updatedAt
+  }, [applyRemoteData])
+
   useEffect(() => {
     if (isInitialMount.current) {
       isInitialMount.current = false
@@ -184,13 +230,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         // First load: if local exists and is newer, keep local; otherwise use server.
         const useLocal =
           !!localData &&
-          new Date(localData.updatedAt).getTime() > new Date(data.updatedAt).getTime()
+          toMillis(localData.updatedAt) > toMillis(data.updatedAt)
         if (!useLocal) {
-          isSyncingFromServer.current = true
-          dispatch({ type: "IMPORT_DATA", data })
-          setTimeout(() => {
-            isSyncingFromServer.current = false
-          }, 0)
+          applyRemoteData(data)
         }
         lastServerUpdateAt.current = data.updatedAt
       } else if (!isCancelled && !data && !hasStoredProject()) {
@@ -208,29 +250,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return () => {
       isCancelled = true
     }
-  }, [dispatch])
+  }, [applyRemoteData])
 
   useEffect(() => {
     let isCancelled = false
     const id = window.setInterval(() => {
       void (async () => {
-        const remote = await loadDefaultProject()
-        if (!remote || isCancelled) return
-        const remoteUpdated = new Date(remote.updatedAt).getTime()
-        const localUpdated = new Date(state.updatedAt).getTime()
-        const lastSeenRemote = lastServerUpdateAt.current
-          ? new Date(lastServerUpdateAt.current).getTime()
-          : 0
-
-        if (remoteUpdated > localUpdated && remoteUpdated >= lastSeenRemote) {
-          isSyncingFromServer.current = true
-          dispatch({ type: "IMPORT_DATA", data: remote })
-          setTimeout(() => {
-            isSyncingFromServer.current = false
-          }, 0)
-        }
-
-        lastServerUpdateAt.current = remote.updatedAt
+        if (isCancelled) return
+        await syncFromServer(state.updatedAt)
       })()
     }, SYNC_INTERVAL_MS)
 
@@ -238,29 +265,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isCancelled = true
       window.clearInterval(id)
     }
-  }, [dispatch, state.updatedAt])
+  }, [state.updatedAt, syncFromServer])
 
   useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState !== "visible") return
       void (async () => {
-        const remote = await loadDefaultProject()
-        if (!remote) return
-        if (new Date(remote.updatedAt).getTime() > new Date(state.updatedAt).getTime()) {
-          isSyncingFromServer.current = true
-          dispatch({ type: "IMPORT_DATA", data: remote })
-          setTimeout(() => {
-            isSyncingFromServer.current = false
-          }, 0)
-        }
-        lastServerUpdateAt.current = remote.updatedAt
+        await syncFromServer(state.updatedAt)
       })()
     }
     document.addEventListener("visibilitychange", onVisibility)
     return () => {
       document.removeEventListener("visibilitychange", onVisibility)
     }
-  }, [dispatch, state.updatedAt])
+  }, [state.updatedAt, syncFromServer])
 
   return (
     <StoreContext.Provider value={{ state, dispatch }}>
