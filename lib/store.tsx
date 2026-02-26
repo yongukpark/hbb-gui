@@ -76,14 +76,18 @@ async function loadDefaultProject(): Promise<ProjectData | null> {
   }
 }
 
-async function saveToServer(data: ProjectData): Promise<ProjectData | null> {
+async function saveToServer(
+  data: ProjectData,
+  expectedServerUpdatedAt?: string | null,
+): Promise<ProjectData | null> {
   if (typeof window === "undefined") return null
   try {
     const headers: Record<string, string> = {
       "content-type": "application/json",
     }
-    if (data.updatedAt) {
-      headers["if-match"] = data.updatedAt
+    const ifMatchValue = expectedServerUpdatedAt ?? data.updatedAt
+    if (ifMatchValue) {
+      headers["if-match"] = ifMatchValue
     }
 
     const res = await fetch("/api/annotations", {
@@ -206,7 +210,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (isInitialMount.current || isSyncingFromServer.current) return
     const timer = setTimeout(() => {
       void (async () => {
-        const saved = await saveToServer(state)
+        const saved = await saveToServer(
+          state,
+          lastServerUpdateAt.current ?? state.updatedAt,
+        )
         if (saved) {
           lastServerUpdateAt.current = saved.updatedAt
         }
