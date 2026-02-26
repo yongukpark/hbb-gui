@@ -92,13 +92,16 @@ async function saveToServer(
     const headers: Record<string, string> = {
       "content-type": "application/json",
     }
+    if (data.updatedAt) {
+      headers["if-match-updated-at"] = data.updatedAt
+    }
 
     const res = await fetch("/api/annotations", {
       method: "PUT",
       headers,
       body: JSON.stringify(data),
     })
-    if (res.status === 409) {
+    if (res.status === 409 || res.status === 428) {
       console.warn("Failed to save annotations: conflict (409)")
       const body = await res.json().catch(() => null)
       const currentUpdatedAt =
