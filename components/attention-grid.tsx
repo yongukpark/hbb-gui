@@ -15,9 +15,14 @@ interface AttentionGridProps {
 export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
   const { state } = useStore()
   const [editTarget, setEditTarget] = useState<{ layer: number; head: number } | null>(null)
+  const [hoverTarget, setHoverTarget] = useState<{ layer: number; head: number } | null>(null)
 
   const handleCellClick = useCallback((layer: number, head: number) => {
     setEditTarget({ layer, head })
+  }, [])
+
+  const handleCellHoverChange = useCallback((layer: number, head: number, active: boolean) => {
+    setHoverTarget(active ? { layer, head } : null)
   }, [])
 
   // Compute which cells match the current filter/search
@@ -72,7 +77,10 @@ export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
             {heads.map((h) => (
               <div
                 key={h}
-                className="flex items-center justify-center text-[10px] font-mono text-muted-foreground py-1"
+                className={`
+                  flex items-center justify-center text-[10px] font-mono py-1 rounded-sm transition-colors
+                  ${hoverTarget?.head === h ? "bg-accent/40 text-foreground" : "text-muted-foreground"}
+                `}
               >
                 H{h}
               </div>
@@ -91,7 +99,14 @@ export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
               >
                 {/* Row label */}
                 <div className="flex items-center justify-end pr-1.5">
-                  <span className="text-[10px] font-mono text-muted-foreground">L{l}</span>
+                  <span
+                    className={`
+                      text-[10px] font-mono rounded-sm px-1 py-0.5 transition-colors
+                      ${hoverTarget?.layer === l ? "bg-accent/40 text-foreground" : "text-muted-foreground"}
+                    `}
+                  >
+                    L{l}
+                  </span>
                 </div>
                 {/* Cells */}
                 {heads.map((h) => {
@@ -108,6 +123,7 @@ export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
                         isHighlighted={isHighlighted}
                         isDimmed={isDimmed}
                         onClick={handleCellClick}
+                        onHoverChange={handleCellHoverChange}
                       />
                     </div>
                   )

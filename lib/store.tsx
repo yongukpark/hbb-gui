@@ -21,26 +21,49 @@ function createEmptyProject(): ProjectData {
 
 const STORAGE_KEY = "pythia-head-naming"
 
+function normalizeProjectData(data: ProjectData): ProjectData {
+  // Migrate old format: single `description` -> per-tag `descriptions`
+  for (const key of Object.keys(data.annotations)) {
+    const ann = data.annotations[key] as any
+    if (typeof ann.description === "string" && !ann.descriptions) {
+      const desc = ann.description
+      ann.descriptions = {}
+      if (desc && ann.tags.length > 0) {
+        ann.descriptions[ann.tags[0]] = desc
+      }
+      delete ann.description
+    }
+  }
+  rebuildTagColorMap(data.tags)
+  return data
+}
+
 function loadFromStorage(): ProjectData | null {
   if (typeof window === "undefined") return null
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    const data = JSON.parse(raw) as ProjectData
-    // Migrate old format: single `description` -> per-tag `descriptions`
-    for (const key of Object.keys(data.annotations)) {
-      const ann = data.annotations[key] as any
-      if (typeof ann.description === "string" && !ann.descriptions) {
-        const desc = ann.description
-        ann.descriptions = {}
-        if (desc && ann.tags.length > 0) {
-          ann.descriptions[ann.tags[0]] = desc
-        }
-        delete ann.description
-      }
-    }
-    rebuildTagColorMap(data.tags)
-    return data
+    return normalizeProjectData(JSON.parse(raw) as ProjectData)
+  } catch {
+    return null
+  }
+}
+
+function hasStoredProject(): boolean {
+  if (typeof window === "undefined") return false
+  try {
+    return localStorage.getItem(STORAGE_KEY) !== null
+  } catch {
+    return false
+  }
+}
+
+async function loadDefaultProject(): Promise<ProjectData | null> {
+  if (typeof window === "undefined") return null
+  try {
+    const res = await fetch("/data/head-annotations.json", { cache: "no-store" })
+    if (!res.ok) return null
+    return normalizeProjectData((await res.json()) as ProjectData)
   } catch {
     return null
   }
@@ -119,6 +142,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const timer = setTimeout(() => saveToStorage(state), 300)
     return () => clearTimeout(timer)
   }, [state])
+
+  useEffect(() => {
+    let isCancelled = false
+    if (hasStoredProject()) return
+
+    void (async () => {
+      const data = await loadDefaultProject()
+      if (!isCancelled && data) {
+        dispatch({ type: "IMPORT_DATA", data })
+      }
+    })()
+
+    return () => {
+      isCancelled = true
+    }
+  }, [dispatch])
 
   return (
     <StoreContext.Provider value={{ state, dispatch }}>

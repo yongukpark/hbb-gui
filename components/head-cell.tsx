@@ -12,6 +12,7 @@ interface HeadCellProps {
   isHighlighted: boolean
   isDimmed: boolean
   onClick: (layer: number, head: number) => void
+  onHoverChange?: (layer: number, head: number, active: boolean) => void
 }
 
 export const HeadCell = memo(function HeadCell({
@@ -20,6 +21,7 @@ export const HeadCell = memo(function HeadCell({
   isHighlighted,
   isDimmed,
   onClick,
+  onHoverChange,
 }: HeadCellProps) {
   const { state } = useStore()
   const key = headKey(layer, head)
@@ -32,6 +34,10 @@ export const HeadCell = memo(function HeadCell({
   const cellContent = (
     <button
       onClick={() => onClick(layer, head)}
+      onMouseEnter={() => onHoverChange?.(layer, head, true)}
+      onMouseLeave={() => onHoverChange?.(layer, head, false)}
+      onFocus={() => onHoverChange?.(layer, head, true)}
+      onBlur={() => onHoverChange?.(layer, head, false)}
       className={`
         relative flex items-center justify-center rounded-sm w-full h-full
         transition-all duration-150 cursor-pointer
