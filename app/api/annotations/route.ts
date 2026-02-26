@@ -19,6 +19,16 @@ function hasBlobToken() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN)
 }
 
+function requireWritableBackend(): NextResponse | null {
+  if (IS_PRODUCTION && !hasBlobToken()) {
+    return NextResponse.json(
+      { error: "BLOB_READ_WRITE_TOKEN is missing in production" },
+      { status: 503 },
+    )
+  }
+  return null
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value)
 }
@@ -93,6 +103,9 @@ async function writeToBlob(payload: unknown) {
 
 export async function GET() {
   try {
+    const backendError = requireWritableBackend()
+    if (backendError) return backendError
+
     const raw = hasBlobToken()
       ? (await readFromBlob()) ?? (!IS_PRODUCTION ? await readFromLocalFile() : null)
       : await readFromLocalFile()
@@ -104,6 +117,7 @@ export async function GET() {
       headers: {
         "content-type": "application/json; charset=utf-8",
         "cache-control": "no-store, no-cache, must-revalidate",
+        "x-storage-backend": hasBlobToken() ? "blob" : "local-file",
       },
     })
   } catch {
@@ -113,6 +127,9 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
+    const backendError = requireWritableBackend()
+    if (backendError) return backendError
+
     const data = await req.json()
     if (!isValidProjectData(data)) {
       return NextResponse.json({ error: "invalid json body" }, { status: 400 })

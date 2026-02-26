@@ -69,7 +69,10 @@ async function loadDefaultProject(): Promise<ProjectData | null> {
   if (typeof window === "undefined") return null
   try {
     const res = await fetch("/api/annotations", { cache: "no-store" })
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.warn("Failed to load annotations:", res.status)
+      return null
+    }
     return normalizeProjectData((await res.json()) as ProjectData)
   } catch {
     return null
@@ -96,9 +99,11 @@ async function saveToServer(
       body: JSON.stringify(data),
     })
     if (res.status === 409) {
+      console.warn("Failed to save annotations: conflict (409)")
       return null
     }
     if (!res.ok) {
+      console.warn("Failed to save annotations:", res.status)
       return null
     }
     return normalizeProjectData((await res.json()) as ProjectData)
