@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
-import crypto from "crypto"
 import { list, put } from "@vercel/blob"
 
 const FILE_PATH = path.join(process.cwd(), "public", "data", "head-annotations.json")
@@ -15,13 +14,6 @@ async function ensureFile() {
 
 function hasBlobToken() {
   return Boolean(process.env.BLOB_READ_WRITE_TOKEN)
-}
-
-function constantTimeEqual(a: string, b: string) {
-  const aBuf = Buffer.from(a)
-  const bBuf = Buffer.from(b)
-  if (aBuf.length !== bBuf.length) return false
-  return crypto.timingSafeEqual(aBuf, bBuf)
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -57,25 +49,6 @@ async function readCurrentData(): Promise<Record<string, unknown> | null> {
   } catch {
     return null
   }
-}
-
-function validateWriteToken(req: Request): NextResponse | null {
-  const requiredToken = process.env.ANNOTATIONS_WRITE_TOKEN
-  if (!requiredToken) {
-    if (IS_PRODUCTION) {
-      return NextResponse.json(
-        { error: "server write token is not configured" },
-        { status: 503 },
-      )
-    }
-    return null
-  }
-
-  const clientToken = req.headers.get("x-annotations-token")
-  if (!clientToken || !constantTimeEqual(clientToken, requiredToken)) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 })
-  }
-  return null
 }
 
 async function readFromLocalFile(): Promise<string | null> {
@@ -134,9 +107,6 @@ export async function GET() {
 
 export async function PUT(req: Request) {
   try {
-    const writeTokenError = validateWriteToken(req)
-    if (writeTokenError) return writeTokenError
-
     const data = await req.json()
     if (!isValidProjectData(data)) {
       return NextResponse.json({ error: "invalid json body" }, { status: 400 })

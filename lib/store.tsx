@@ -20,7 +20,6 @@ function createEmptyProject(): ProjectData {
 }
 
 const STORAGE_KEY = "pythia-head-naming"
-const WRITE_TOKEN_STORAGE_KEY = "annotations-write-token"
 const SYNC_INTERVAL_MS = 5000
 
 function toMillis(iso: string | null | undefined): number {
@@ -80,12 +79,8 @@ async function loadDefaultProject(): Promise<ProjectData | null> {
 async function saveToServer(data: ProjectData): Promise<ProjectData | null> {
   if (typeof window === "undefined") return null
   try {
-    const writeToken = localStorage.getItem(WRITE_TOKEN_STORAGE_KEY)
     const headers: Record<string, string> = {
       "content-type": "application/json",
-    }
-    if (writeToken) {
-      headers["x-annotations-token"] = writeToken
     }
     if (data.updatedAt) {
       headers["if-match"] = data.updatedAt
