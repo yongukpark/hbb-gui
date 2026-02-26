@@ -68,12 +68,6 @@ function isValidProjectData(value: unknown): boolean {
   return true
 }
 
-function getIfMatch(req: Request): string | null {
-  const raw = req.headers.get("if-match")
-  if (!raw) return null
-  return raw.replaceAll('"', "").trim() || null
-}
-
 async function readCurrentData(): Promise<Record<string, unknown> | null> {
   if (hasExternalSync()) {
     return readFromExternal()
@@ -160,14 +154,12 @@ async function readFromExternal(): Promise<Record<string, unknown> | null> {
 
 async function writeToExternal(
   payload: Record<string, unknown>,
-  ifMatch: string | null,
 ): Promise<{ ok: true } | { ok: false; status: 409; currentUpdatedAt: string | null }> {
   const res = await fetch(EXTERNAL_SYNC_URL, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({
       action: "put",
-      ifMatch,
       secret: EXTERNAL_SYNC_SECRET || undefined,
       data: payload,
     }),
@@ -236,19 +228,6 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "invalid json body" }, { status: 400 })
     }
 
-    const current = await readCurrentData()
-    const ifMatch = getIfMatch(req)
-    if (ifMatch) {
-      const currentUpdatedAt =
-        current && typeof current.updatedAt === "string" ? current.updatedAt : null
-      if (currentUpdatedAt && currentUpdatedAt !== ifMatch) {
-        return NextResponse.json(
-          { error: "conflict", currentUpdatedAt },
-          { status: 409 },
-        )
-      }
-    }
-
     const now = new Date().toISOString()
     const payload = {
       ...data,
@@ -257,7 +236,7 @@ export async function PUT(req: Request) {
     }
 
     if (hasExternalSync()) {
-      const result = await writeToExternal(payload, ifMatch)
+      const result = await writeToExternal(payload)
       if (!result.ok) {
         return NextResponse.json(
           { error: "conflict", currentUpdatedAt: result.currentUpdatedAt },

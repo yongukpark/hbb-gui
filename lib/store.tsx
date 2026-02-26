@@ -86,16 +86,11 @@ type SaveResult =
 
 async function saveToServer(
   data: ProjectData,
-  expectedServerUpdatedAt?: string | null,
 ): Promise<SaveResult> {
   if (typeof window === "undefined") return { kind: "error" }
   try {
     const headers: Record<string, string> = {
       "content-type": "application/json",
-    }
-    const ifMatchValue = expectedServerUpdatedAt ?? data.updatedAt
-    if (ifMatchValue) {
-      headers["if-match"] = ifMatchValue
     }
 
     const res = await fetch("/api/annotations", {
@@ -231,10 +226,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         const serverUpdated = toMillis(lastServerUpdateAt.current)
         if (localUpdated <= serverUpdated) return
 
-        const result = await saveToServer(
-          state,
-          lastServerUpdateAt.current ?? state.updatedAt,
-        )
+        const result = await saveToServer(state)
         if (result.kind === "ok") {
           applyRemoteData(result.data)
           lastServerUpdateAt.current = result.data.updatedAt
