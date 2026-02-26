@@ -182,15 +182,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     }, 0)
   }, [dispatch])
 
-  const syncFromServer = useCallback(async (localUpdatedAt: string) => {
+  const syncFromServer = useCallback(async () => {
     const remote = await loadDefaultProject()
     if (!remote) return
 
     const remoteUpdated = toMillis(remote.updatedAt)
-    const localUpdated = toMillis(localUpdatedAt)
     const lastSeenRemote = toMillis(lastServerUpdateAt.current)
 
-    if (remoteUpdated > localUpdated && remoteUpdated >= lastSeenRemote) {
+    if (remoteUpdated > lastSeenRemote) {
       applyRemoteData(remote)
     }
 
@@ -215,12 +214,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           lastServerUpdateAt.current ?? state.updatedAt,
         )
         if (saved) {
+          applyRemoteData(saved)
           lastServerUpdateAt.current = saved.updatedAt
         }
       })()
     }, 500)
     return () => clearTimeout(timer)
-  }, [state])
+  }, [applyRemoteData, state])
 
   useEffect(() => {
     let isCancelled = false
@@ -229,13 +229,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const localData = loadFromStorage()
       const data = await loadDefaultProject()
       if (!isCancelled && data) {
-        // First load: if local exists and is newer, keep local; otherwise use server.
-        const useLocal =
-          !!localData &&
-          toMillis(localData.updatedAt) > toMillis(data.updatedAt)
-        if (!useLocal) {
-          applyRemoteData(data)
-        }
+        // Server is the shared source of truth when available.
+        applyRemoteData(data)
         lastServerUpdateAt.current = data.updatedAt
       } else if (!isCancelled && !data && !hasStoredProject()) {
         // no server file yet: seed it from current local state
@@ -259,7 +254,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     const id = window.setInterval(() => {
       void (async () => {
         if (isCancelled) return
-        await syncFromServer(state.updatedAt)
+        await syncFromServer()
       })()
     }, SYNC_INTERVAL_MS)
 
@@ -267,20 +262,20 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isCancelled = true
       window.clearInterval(id)
     }
-  }, [state.updatedAt, syncFromServer])
+  }, [syncFromServer])
 
   useEffect(() => {
     const onVisibility = () => {
       if (document.visibilityState !== "visible") return
       void (async () => {
-        await syncFromServer(state.updatedAt)
+        await syncFromServer()
       })()
     }
     document.addEventListener("visibilitychange", onVisibility)
     return () => {
       document.removeEventListener("visibilitychange", onVisibility)
     }
-  }, [state.updatedAt, syncFromServer])
+  }, [syncFromServer])
 
   return (
     <StoreContext.Provider value={{ state, dispatch }}>
