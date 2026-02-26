@@ -20,7 +20,9 @@ function createEmptyProject(): ProjectData {
 }
 
 const STORAGE_KEY = "pythia-head-naming"
-const SYNC_INTERVAL_MS = 1000
+const SYNC_INTERVAL_MS = 2000
+const LOCAL_STORAGE_DEBOUNCE_MS = 120
+const SERVER_SAVE_DEBOUNCE_MS = 180
 
 function toMillis(iso: string | null | undefined): number {
   if (!iso) return 0
@@ -242,7 +244,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       isInitialMount.current = false
       return
     }
-    const timer = setTimeout(() => saveToStorage(state), 300)
+    const timer = setTimeout(() => saveToStorage(state), LOCAL_STORAGE_DEBOUNCE_MS)
     return () => clearTimeout(timer)
   }, [state])
 
@@ -267,7 +269,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           await syncFromServer()
         }
       })()
-    }, 500)
+    }, SERVER_SAVE_DEBOUNCE_MS)
     return () => clearTimeout(timer)
   }, [applyRemoteData, state, syncFromServer])
 
