@@ -3,6 +3,9 @@ import { promises as fs } from "fs"
 import path from "path"
 import { list, put } from "@vercel/blob"
 
+export const dynamic = "force-dynamic"
+export const revalidate = 0
+
 const FILE_PATH = path.join(process.cwd(), "public", "data", "head-annotations.json")
 const BLOB_PATH = "data/head-annotations.json"
 const IS_PRODUCTION = process.env.NODE_ENV === "production"
@@ -98,7 +101,10 @@ export async function GET() {
     }
     return new NextResponse(raw, {
       status: 200,
-      headers: { "content-type": "application/json; charset=utf-8" },
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store, no-cache, must-revalidate",
+      },
     })
   } catch {
     return NextResponse.json({ error: "annotations file not found" }, { status: 404 })

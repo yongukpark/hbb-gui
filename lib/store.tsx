@@ -20,7 +20,7 @@ function createEmptyProject(): ProjectData {
 }
 
 const STORAGE_KEY = "pythia-head-naming"
-const SYNC_INTERVAL_MS = 5000
+const SYNC_INTERVAL_MS = 1000
 
 function toMillis(iso: string | null | undefined): number {
   if (!iso) return 0
