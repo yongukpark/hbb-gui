@@ -22,6 +22,7 @@ export type StoreAction =
   | { type: "ADD_TAG"; tag: string }
   | { type: "REMOVE_TAG"; tag: string }
   | { type: "IMPORT_DATA"; data: ProjectData }
+  | { type: "IMPORT_LOCAL_DATA"; data: ProjectData }
   | { type: "RESET" }
 
 export function headKey(layer: number, head: number): string {

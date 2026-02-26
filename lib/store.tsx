@@ -164,6 +164,14 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
     }
     case "IMPORT_DATA": {
       rebuildTagColorMap(action.data.tags)
+      return {
+        ...action.data,
+        updatedAt: action.data.updatedAt || now,
+        createdAt: action.data.createdAt || now,
+      }
+    }
+    case "IMPORT_LOCAL_DATA": {
+      rebuildTagColorMap(action.data.tags)
       return { ...action.data, updatedAt: now, createdAt: action.data.createdAt || now }
     }
     case "RESET": {
@@ -190,6 +198,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const isInitialMount = useRef(true)
   const isSyncingFromServer = useRef(false)
   const lastServerUpdateAt = useRef<string | null>(null)
+  const bootstrapComplete = useRef(false)
+  const latestStateRef = useRef(state)
+
+  useEffect(() => {
+    latestStateRef.current = state
+  }, [state])
+
+  const hasMeaningfulData = useCallback((data: ProjectData): boolean => {
+    return Object.keys(data.annotations).length > 0 || data.tags.length > 0
+  }, [])
 
   const applyRemoteData = useCallback((data: ProjectData) => {
     isSyncingFromServer.current = true
@@ -200,18 +218,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [dispatch])
 
   const syncFromServer = useCallback(async () => {
+    if (!bootstrapComplete.current) return
     const remote = await loadDefaultProject()
     if (!remote) return
 
-    const remoteUpdated = toMillis(remote.updatedAt)
+    const currentLocal = latestStateRef.current
+    const localUpdated = toMillis(currentLocal.updatedAt)
     const lastSeenRemote = toMillis(lastServerUpdateAt.current)
+    if (hasMeaningfulData(currentLocal) && localUpdated > lastSeenRemote) {
+      return
+    }
 
+    const remoteUpdated = toMillis(remote.updatedAt)
     if (remoteUpdated > lastSeenRemote) {
       applyRemoteData(remote)
     }
 
     lastServerUpdateAt.current = remote.updatedAt
-  }, [applyRemoteData])
+  }, [applyRemoteData, hasMeaningfulData])
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -251,29 +275,58 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     let isCancelled = false
 
     void (async () => {
-      const localData = loadFromStorage()
-      const data = await loadDefaultProject()
-      if (!isCancelled && data) {
-        // Server is the shared source of truth when available.
-        applyRemoteData(data)
-        lastServerUpdateAt.current = data.updatedAt
-      } else if (!isCancelled && !data) {
-        // no server file yet: seed it from local data (or an empty project)
-        const result = await saveToServer(localData || createEmptyProject(), null)
-        if (result.kind === "ok") {
-          applyRemoteData(result.data)
-          lastServerUpdateAt.current = result.data.updatedAt
+      try {
+        const localData = loadFromStorage()
+        const data = await loadDefaultProject()
+        if (!isCancelled && data) {
+          const currentLocal = latestStateRef.current
+          const localUpdated = toMillis(currentLocal.updatedAt)
+          const remoteUpdated = toMillis(data.updatedAt)
+
+          if (hasMeaningfulData(currentLocal) && localUpdated > remoteUpdated) {
+            const result = await saveToServer(currentLocal, data.updatedAt || null)
+            if (result.kind === "ok") {
+              applyRemoteData(result.data)
+              lastServerUpdateAt.current = result.data.updatedAt
+              return
+            }
+            if (result.kind === "conflict") {
+              if (result.currentUpdatedAt) {
+                lastServerUpdateAt.current = result.currentUpdatedAt
+              } else {
+                lastServerUpdateAt.current = data.updatedAt
+              }
+              return
+            }
+            lastServerUpdateAt.current = data.updatedAt
+            return
+          }
+
+          // Server is the shared source of truth when available.
+          applyRemoteData(data)
+          lastServerUpdateAt.current = data.updatedAt
+        } else if (!isCancelled && !data) {
+          // no server file yet: seed it from local data (or an empty project)
+          const result = await saveToServer(localData || createEmptyProject(), null)
+          if (result.kind === "ok") {
+            applyRemoteData(result.data)
+            lastServerUpdateAt.current = result.data.updatedAt
+          }
+        } else if (!isCancelled && localData) {
+          // no server response: keep local as source of truth for now
+          lastServerUpdateAt.current = localData.updatedAt
         }
-      } else if (!isCancelled && localData) {
-        // no server response: keep local as source of truth for now
-        lastServerUpdateAt.current = localData.updatedAt
+      } finally {
+        if (!isCancelled) {
+          bootstrapComplete.current = true
+        }
       }
     })()
 
     return () => {
       isCancelled = true
     }
-  }, [applyRemoteData])
+  }, [applyRemoteData, hasMeaningfulData])
 
   useEffect(() => {
     let isCancelled = false
@@ -347,7 +400,7 @@ export function useImportJson() {
         const text = await file.text()
         const data = JSON.parse(text) as ProjectData
         if (data.modelName && data.annotations && data.tags) {
-          dispatch({ type: "IMPORT_DATA", data })
+          dispatch({ type: "IMPORT_LOCAL_DATA", data })
         }
       } catch {
         // invalid json
