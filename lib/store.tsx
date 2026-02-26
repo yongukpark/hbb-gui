@@ -237,10 +237,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         // Server is the shared source of truth when available.
         applyRemoteData(data)
         lastServerUpdateAt.current = data.updatedAt
-      } else if (!isCancelled && !data && !hasStoredProject()) {
-        // no server file yet: seed it from current local state
+      } else if (!isCancelled && !data) {
+        // no server file yet: seed it from local data (or an empty project)
         const saved = await saveToServer(localData || createEmptyProject())
         if (saved) {
+          applyRemoteData(saved)
           lastServerUpdateAt.current = saved.updatedAt
         }
       } else if (!isCancelled && localData) {
