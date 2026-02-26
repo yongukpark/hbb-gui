@@ -1,0 +1,128 @@
+{
+  "modelName": "Pythia-1.4B",
+  "numLayers": 24,
+  "numHeads": 16,
+  "annotations": {
+    "L15H7": {
+      "layer": 15,
+      "head": 7,
+      "tags": [
+        "capital"
+      ],
+      "descriptions": {
+        "capital": "strongly related to the capital (1)"
+      }
+    },
+    "L17H6": {
+      "layer": 17,
+      "head": 6,
+      "tags": [
+        "capital"
+      ],
+      "descriptions": {
+        "capital": "weakly related to the capital (2)"
+      }
+    },
+    "L13H6": {
+      "layer": 13,
+      "head": 6,
+      "tags": [
+        "mul",
+        "add",
+        "chemical-symbols",
+        "arithmatic-progression"
+      ],
+      "descriptions": {
+        "mul": "weakly related to multiplication (1)",
+        "add": "weakly related to addition (3)",
+        "chemical-symbols": "strongly related to chemical-symbols (1)",
+        "arithmatic-progression": "strongly related to (1)"
+      }
+    },
+    "L12H0": {
+      "layer": 12,
+      "head": 0,
+      "tags": [
+        "add"
+      ],
+      "descriptions": {
+        "add": "strongly related to addition (1)"
+      }
+    },
+    "L13H1": {
+      "layer": 13,
+      "head": 1,
+      "tags": [
+        "add",
+        "sub"
+      ],
+      "descriptions": {
+        "add": "strongly related to addition (2)",
+        "sub": "strongly related to subtraction (1)"
+      }
+    },
+    "L11H10": {
+      "layer": 11,
+      "head": 10,
+      "tags": [
+        "add",
+        "sub"
+      ],
+      "descriptions": {
+        "add": "weakly related to addition (4)",
+        "sub": "weakly related to subtraction (2)"
+      }
+    },
+    "L12H6": {
+      "layer": 12,
+      "head": 6,
+      "tags": [
+        "sub"
+      ],
+      "descriptions": {
+        "sub": "weakly related to subtraction (3)"
+      }
+    },
+    "L16H14": {
+      "layer": 16,
+      "head": 14,
+      "tags": [
+        "sub"
+      ],
+      "descriptions": {
+        "sub": "weakly related to subtraction (4)"
+      }
+    },
+    "L13H2": {
+      "layer": 13,
+      "head": 2,
+      "tags": [
+        "opposite"
+      ],
+      "descriptions": {
+        "opposite": "strongly related with opposite (1)"
+      }
+    },
+    "L22H2": {
+      "layer": 22,
+      "head": 2,
+      "tags": [
+        "chemical-symbols"
+      ],
+      "descriptions": {
+        "chemical-symbols": "weakly related to chemical symbols (3)"
+      }
+    }
+  },
+  "tags": [
+    "capital",
+    "mul",
+    "add",
+    "sub",
+    "opposite",
+    "chemical-symbols",
+    "arithmatic-progression"
+  ],
+  "createdAt": "2026-02-25T16:30:32.502Z",
+  "updatedAt": "2026-02-26T02:19:24.157Z"
+}
