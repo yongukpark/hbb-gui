@@ -250,11 +250,13 @@ async function readFromExternal(): Promise<ReadResult> {
 
   if (res.status === 404 || res.status === 204) return { status: "missing" }
   if (!res.ok) {
-    throw new Error(`external read failed: ${res.status}`)
+    throw new ExternalSyncError(502, `external_read_http_${res.status}`)
   }
 
   const data = await res.json()
-  if (!isRecord(data)) return { status: "invalid" }
+  if (!isRecord(data)) {
+    throw new ExternalSyncError(502, "external_read_invalid_json_shape")
+  }
   if (typeof data.error === "string") {
     const code = data.error
     if (code === "unauthorized") throw new ExternalSyncError(401, code)
@@ -264,7 +266,9 @@ async function readFromExternal(): Promise<ReadResult> {
 
   // Support both direct payload and wrapped `{ data }` payloads.
   const maybeData = isRecord(data.data) ? data.data : data
-  if (!isValidProjectData(maybeData)) return { status: "invalid" }
+  if (!isValidProjectData(maybeData)) {
+    throw new ExternalSyncError(502, "external_read_invalid_payload")
+  }
   return { status: "ok", data: maybeData }
 }
 
@@ -296,7 +300,7 @@ async function writeToExternal(
   }
 
   if (!res.ok) {
-    throw new Error(`external write failed: ${res.status}`)
+    throw new ExternalSyncError(502, `external_write_http_${res.status}`)
   }
 
   const body = await res.json().catch(() => null)
