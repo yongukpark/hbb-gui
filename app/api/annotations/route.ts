@@ -24,6 +24,16 @@ type ReadResult =
   | { status: "missing" }
   | { status: "invalid" }
 
+class ExternalSyncError extends Error {
+  status: number
+  code: string
+  constructor(status: number, code: string, message?: string) {
+    super(message || code)
+    this.status = status
+    this.code = code
+  }
+}
+
 function createEmptyProjectData() {
   const now = new Date().toISOString()
   return {
@@ -246,7 +256,10 @@ async function readFromExternal(): Promise<ReadResult> {
   const data = await res.json()
   if (!isRecord(data)) return { status: "invalid" }
   if (typeof data.error === "string") {
-    throw new Error(`external read error: ${data.error}`)
+    const code = data.error
+    if (code === "unauthorized") throw new ExternalSyncError(401, code)
+    if (code === "busy") throw new ExternalSyncError(503, code)
+    throw new ExternalSyncError(502, code)
   }
 
   // Support both direct payload and wrapped `{ data }` payloads.
@@ -292,7 +305,10 @@ async function writeToExternal(
     return { ok: false, status: 409, currentUpdatedAt }
   }
   if (body && isRecord(body) && typeof body.error === "string") {
-    throw new Error(`external write error: ${body.error}`)
+    const code = body.error
+    if (code === "unauthorized") throw new ExternalSyncError(401, code)
+    if (code === "busy") throw new ExternalSyncError(503, code)
+    throw new ExternalSyncError(502, code)
   }
 
   return { ok: true }
@@ -323,7 +339,10 @@ export async function GET() {
         "x-storage-backend": getBackendName(),
       },
     })
-  } catch {
+  } catch (err) {
+    if (err instanceof ExternalSyncError) {
+      return NextResponse.json({ error: err.code }, { status: err.status })
+    }
     return NextResponse.json({ error: "failed to read annotations file" }, { status: 500 })
   }
 }
@@ -403,7 +422,10 @@ export async function PUT(req: Request) {
     }
 
     return NextResponse.json(payload, { status: 200 })
-  } catch {
+  } catch (err) {
+    if (err instanceof ExternalSyncError) {
+      return NextResponse.json({ error: err.code }, { status: err.status })
+    }
     return NextResponse.json({ error: "failed to write annotations file" }, { status: 500 })
   }
 }
