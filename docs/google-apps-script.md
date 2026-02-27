@@ -80,12 +80,13 @@ function getBackupFolder() {
   return folder;
 }
 
-function snapshotToDrive(currentData) {
-  if (!currentData) return;
+function snapshotToDrive(currentData, fallbackData) {
+  const dataToBackup = currentData || fallbackData;
+  if (!dataToBackup) return;
   const folder = getBackupFolder();
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const name = `annotations-backup-${stamp}.json`;
-  folder.createFile(name, JSON.stringify(currentData, null, 2), MimeType.PLAIN_TEXT);
+  folder.createFile(name, JSON.stringify(dataToBackup, null, 2), MimeType.PLAIN_TEXT);
   pruneBackups(folder, getBackupLimit());
 }
 
@@ -141,7 +142,7 @@ function doPost(e) {
       updatedAt: now,
     });
 
-    snapshotToDrive(current);
+    snapshotToDrive(current, payload);
     writeData(payload);
     return jsonOut(payload);
   } finally {
