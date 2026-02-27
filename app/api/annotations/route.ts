@@ -15,6 +15,9 @@ const IS_PRODUCTION = process.env.NODE_ENV === "production"
 const EXTERNAL_SYNC_URL = process.env.EXTERNAL_SYNC_URL?.trim() || ""
 const EXTERNAL_SYNC_SECRET = process.env.EXTERNAL_SYNC_SECRET?.trim() || ""
 const WRITE_TOKEN = process.env.ANNOTATIONS_WRITE_TOKEN?.trim() || ""
+const MAX_REQUEST_BYTES = Number.parseInt(process.env.ANNOTATIONS_MAX_REQUEST_BYTES || "", 10) || 1024 * 1024
+const LOCAL_BACKUP_LIMIT = Number.parseInt(process.env.ANNOTATIONS_BACKUP_LIMIT || "", 10) || 20
+const LOCAL_BACKUP_DIR = path.join(path.dirname(FILE_PATH), "backups")
 
 type ReadResult =
   | { status: "ok"; data: Record<string, unknown> }
@@ -162,7 +165,39 @@ async function writeFileAtomically(filePath: string, content: string) {
 
 async function writeToLocalFile(payload: unknown) {
   await ensureFile()
+  await snapshotLocalBackup().catch(() => {})
   await writeFileAtomically(FILE_PATH, `${JSON.stringify(payload, null, 2)}\n`)
+}
+
+async function snapshotLocalBackup() {
+  let currentRaw: string
+  try {
+    currentRaw = await fs.readFile(FILE_PATH, "utf8")
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    if (code === "ENOENT") return
+    throw err
+  }
+
+  await fs.mkdir(LOCAL_BACKUP_DIR, { recursive: true })
+  const backupName = `${path.basename(FILE_PATH)}.${Date.now()}.${Math.random().toString(16).slice(2)}.bak`
+  const backupPath = path.join(LOCAL_BACKUP_DIR, backupName)
+  await writeFileAtomically(backupPath, currentRaw.endsWith("\n") ? currentRaw : `${currentRaw}\n`)
+  await pruneLocalBackups()
+}
+
+async function pruneLocalBackups() {
+  if (LOCAL_BACKUP_LIMIT <= 0) return
+  const entries = await fs.readdir(LOCAL_BACKUP_DIR, { withFileTypes: true })
+  const prefix = `${path.basename(FILE_PATH)}.`
+  const backups = entries
+    .filter((entry) => entry.isFile() && entry.name.startsWith(prefix) && entry.name.endsWith(".bak"))
+    .map((entry) => entry.name)
+    .sort()
+    .reverse()
+
+  const remove = backups.slice(LOCAL_BACKUP_LIMIT)
+  await Promise.all(remove.map((name) => fs.unlink(path.join(LOCAL_BACKUP_DIR, name)).catch(() => {})))
 }
 
 async function findBlobUrlByPath(pathname: string): Promise<string | null> {
@@ -230,6 +265,8 @@ async function writeToExternal(
     body: JSON.stringify({
       action: "put",
       secret: EXTERNAL_SYNC_SECRET || undefined,
+      // Keep both names for compatibility with older Apps Script implementations.
+      ifMatch: expectedUpdatedAt || undefined,
       ifMatchUpdatedAt: expectedUpdatedAt || undefined,
       data: payload,
     }),
@@ -299,10 +336,30 @@ export async function PUT(req: Request) {
     const trustError = requireTrustedWriteRequest(req)
     if (trustError) return trustError
 
-    const data = await req.json()
+    const contentLength = req.headers.get("content-length")
+    if (contentLength) {
+      const len = Number.parseInt(contentLength, 10)
+      if (Number.isFinite(len) && len > MAX_REQUEST_BYTES) {
+        return NextResponse.json({ error: "payload too large" }, { status: 413 })
+      }
+    }
+
+    const raw = await req.text()
+    if (Buffer.byteLength(raw, "utf8") > MAX_REQUEST_BYTES) {
+      return NextResponse.json({ error: "payload too large" }, { status: 413 })
+    }
+
+    let data: unknown
+    try {
+      data = JSON.parse(raw)
+    } catch {
+      return NextResponse.json({ error: "invalid json body" }, { status: 400 })
+    }
+
     if (!isValidProjectData(data)) {
       return NextResponse.json({ error: "invalid json body" }, { status: 400 })
     }
+    const validatedData = data as Record<string, unknown>
 
     const readResult = await readCurrentData()
     if (readResult.status === "invalid") {
@@ -326,9 +383,9 @@ export async function PUT(req: Request) {
 
     const now = new Date().toISOString()
     const payload = {
-      ...data,
+      ...validatedData,
       updatedAt: now,
-      createdAt: typeof data.createdAt === "string" ? data.createdAt : now,
+      createdAt: typeof validatedData.createdAt === "string" ? validatedData.createdAt : now,
     }
 
     if (hasExternalSync()) {
