@@ -1,6 +1,6 @@
 "use client"
 
-import { getTagColor } from "@/lib/colors"
+import { getTagColor, getTagLabel } from "@/lib/colors"
 import { useStore } from "@/lib/store"
 
 interface TagBadgeProps {
@@ -21,7 +21,7 @@ export function TagBadge({ tag, size = "sm", removable = false, onRemove }: TagB
       }`}
       style={{ backgroundColor: color.badge, color: color.badgeText }}
     >
-      {tag}
+      {getTagLabel(tag)}
       {removable && onRemove && (
         <button
           onClick={(e) => {
@@ -29,7 +29,7 @@ export function TagBadge({ tag, size = "sm", removable = false, onRemove }: TagB
             onRemove()
           }}
           className="ml-0.5 opacity-70 hover:opacity-100"
-          aria-label={`Remove tag ${tag}`}
+          aria-label={`Remove tag ${getTagLabel(tag)}`}
         >
           x
         </button>

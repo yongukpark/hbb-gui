@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react"
 import { useStore, useAnnotationCount } from "@/lib/store"
-import { getTagColor } from "@/lib/colors"
+import { getTagColor, getTagLabel, getTagParts } from "@/lib/colors"
 
 interface CategorySidebarProps {
   filterTag: string | null
@@ -24,6 +24,20 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
     }
     return counts
   }, [state.annotations])
+
+  const groupedTags = useMemo(() => {
+    const groups: Record<string, string[]> = {}
+    for (const tag of state.tags) {
+      const { major } = getTagParts(tag)
+      if (!groups[major]) groups[major] = []
+      groups[major].push(tag)
+    }
+    return Object.entries(groups).map(([major, tags]) => ({
+      major,
+      tags,
+      totalCount: tags.reduce((sum, tag) => sum + (tagCounts[tag] || 0), 0),
+    }))
+  }, [state.tags, tagCounts])
 
   return (
     <div className="flex flex-col h-full border-r border-border bg-card">
@@ -87,41 +101,58 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
         {/* Divider */}
         {state.tags.length > 0 && <div className="h-px bg-border mx-2 my-1" />}
 
-        {/* Tag categories */}
-        {state.tags.map((tag) => {
-          const isActive = filterTag === tag
-          const color = getTagColor(tag, state.tags)
-          const count = tagCounts[tag] || 0
-
+        {groupedTags.map(({ major, tags, totalCount }) => {
+          const majorFilter = `__major__:${major}`
+          const majorColor = getTagColor(major, state.tags)
+          const isMajorActive = filterTag === majorFilter
           return (
-            <button
-              key={tag}
-              onClick={() => onFilterTagChange(isActive ? null : tag)}
-              className={`
-                flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-all cursor-pointer
-                ${isActive
-                  ? "font-medium"
-                  : "hover:bg-accent/50"
-                }
-              `}
-              style={{
-                backgroundColor: isActive ? color.bg : undefined,
-                color: isActive ? color.text : undefined,
-              }}
-            >
-              {/* Color dot */}
-              <span
-                className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                style={{ backgroundColor: color.badge }}
-              />
-              <span className="truncate flex-1 text-left">{tag}</span>
-              <span
-                className="text-xs font-mono tabular-nums flex-shrink-0"
-                style={{ opacity: 0.7 }}
+            <div key={major} className="space-y-0.5">
+              <button
+                onClick={() => onFilterTagChange(isMajorActive ? null : majorFilter)}
+                className={`
+                  flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-all cursor-pointer
+                  ${isMajorActive ? "font-semibold" : "hover:bg-accent/50 font-medium"}
+                `}
+                style={{
+                  backgroundColor: isMajorActive ? majorColor.bg : undefined,
+                  color: isMajorActive ? majorColor.text : undefined,
+                }}
               >
-                {count}
-              </span>
-            </button>
+                <span
+                  className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                  style={{ backgroundColor: majorColor.badge }}
+                />
+                <span className="truncate flex-1 text-left">{major}</span>
+                <span className="text-xs font-mono tabular-nums opacity-70">{totalCount}</span>
+              </button>
+
+              {tags.map((tag) => {
+                const isActive = filterTag === tag
+                const color = getTagColor(tag, state.tags)
+                const count = tagCounts[tag] || 0
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => onFilterTagChange(isActive ? null : tag)}
+                    className={`
+                      ml-4 flex w-[calc(100%-1rem)] items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-all cursor-pointer
+                      ${isActive ? "font-medium" : "hover:bg-accent/40"}
+                    `}
+                    style={{
+                      backgroundColor: isActive ? color.bg : undefined,
+                      color: isActive ? color.text : undefined,
+                    }}
+                  >
+                    <span
+                      className="h-2 w-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: color.badge }}
+                    />
+                    <span className="truncate flex-1 text-left">{getTagLabel(tag, true)}</span>
+                    <span className="text-xs font-mono tabular-nums opacity-70">{count}</span>
+                  </button>
+                )
+              })}
+            </div>
           )
         })}
 

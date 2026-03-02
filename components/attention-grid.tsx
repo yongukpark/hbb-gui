@@ -6,6 +6,7 @@ import { headKey } from "@/lib/types"
 import { HeadCell } from "@/components/head-cell"
 import { HeadEditDialog } from "@/components/head-edit-dialog"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
+import { getTagParts } from "@/lib/colors"
 
 interface AttentionGridProps {
   filterTag: string | null
@@ -44,8 +45,14 @@ export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
       return matches
     }
 
+    const majorFilter = filterTag?.startsWith("__major__:") ? filterTag.slice("__major__:".length) : null
+
     for (const [key, ann] of Object.entries(state.annotations)) {
-      const tagMatch = !filterTag || ann.tags.includes(filterTag)
+      const tagMatch =
+        !filterTag ||
+        (majorFilter
+          ? ann.tags.some((tag) => getTagParts(tag).major === majorFilter)
+          : ann.tags.includes(filterTag))
       const searchMatch =
         !searchQuery ||
         Object.values(ann.descriptions).some((d) =>

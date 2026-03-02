@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Check, ChevronsUpDown, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { getTagColor } from "@/lib/colors"
+import { getTagColor, getTagLabel, getTagParts } from "@/lib/colors"
 
 interface HeadEditDialogProps {
   layer: number | null
@@ -36,6 +36,15 @@ export function HeadEditDialog({ layer, head, open, onOpenChange }: HeadEditDial
 
   const key = layer !== null && head !== null ? headKey(layer, head) : null
   const existing = key ? state.annotations[key] : null
+  const groupedTags = React.useMemo(() => {
+    const groups: Record<string, string[]> = {}
+    for (const tag of state.tags) {
+      const { major } = getTagParts(tag)
+      if (!groups[major]) groups[major] = []
+      groups[major].push(tag)
+    }
+    return Object.entries(groups)
+  }, [state.tags])
 
   useEffect(() => {
     if (open && key) {
@@ -84,8 +93,16 @@ export function HeadEditDialog({ layer, head, open, onOpenChange }: HeadEditDial
     )
   }
 
+  function normalizeTagInput(input: string): string {
+    return input
+      .split("/")
+      .map((part) => part.trim().toLowerCase().replace(/\s+/g, "-"))
+      .filter(Boolean)
+      .join("/")
+  }
+
   function handleCreateTag() {
-    const tag = newTagInput.trim().toLowerCase().replace(/\s+/g, "-")
+    const tag = normalizeTagInput(newTagInput)
     if (!tag) return
     if (!state.tags.includes(tag)) {
       dispatch({ type: "ADD_TAG", tag })
@@ -131,7 +148,7 @@ export function HeadEditDialog({ layer, head, open, onOpenChange }: HeadEditDial
               <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
                 <Command>
                   <CommandInput
-                    placeholder="Search or type new tag..."
+                    placeholder="Search or type major/subtopic..."
                     value={newTagInput}
                     onValueChange={setNewTagInput}
                   />
@@ -142,34 +159,36 @@ export function HeadEditDialog({ layer, head, open, onOpenChange }: HeadEditDial
                           className="w-full cursor-pointer px-2 py-1.5 text-sm text-left hover:bg-accent rounded-sm"
                           onClick={handleCreateTag}
                         >
-                          Create &quot;{newTagInput.trim().toLowerCase().replace(/\s+/g, "-")}&quot;
+                          Create &quot;{normalizeTagInput(newTagInput)}&quot;
                         </button>
                       ) : (
                         <span className="text-sm text-muted-foreground">
-                          Type a name to create a new tag
+                          Type a major/subtopic tag (example: reasoning/causal)
                         </span>
                       )}
                     </CommandEmpty>
-                    <CommandGroup>
-                      {state.tags.map((tag) => (
-                        <CommandItem
-                          key={tag}
-                          value={tag}
-                          onSelect={() => toggleTag(tag)}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedTags.includes(tag) ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <TagBadge tag={tag} size="md" />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
+                    {groupedTags.map(([major, tags]) => (
+                      <CommandGroup key={major} heading={major}>
+                        {tags.map((tag) => (
+                          <CommandItem
+                            key={tag}
+                            value={tag}
+                            onSelect={() => toggleTag(tag)}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedTags.includes(tag) ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <TagBadge tag={tag} size="md" />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ))}
                   </CommandList>
                 </Command>
-                {newTagInput.trim() && !state.tags.includes(newTagInput.trim().toLowerCase().replace(/\s+/g, "-")) && (
+                {newTagInput.trim() && !state.tags.includes(normalizeTagInput(newTagInput)) && (
                   <div className="border-t px-2 py-2">
                     <Button
                       size="sm"
@@ -177,7 +196,7 @@ export function HeadEditDialog({ layer, head, open, onOpenChange }: HeadEditDial
                       className="w-full justify-start text-sm"
                       onClick={handleCreateTag}
                     >
-                      + Create &quot;{newTagInput.trim().toLowerCase().replace(/\s+/g, "-")}&quot;
+                      + Create &quot;{normalizeTagInput(newTagInput)}&quot;
                     </Button>
                   </div>
                 )}
@@ -206,7 +225,7 @@ export function HeadEditDialog({ layer, head, open, onOpenChange }: HeadEditDial
                     <Textarea
                       value={descriptions[tag] || ""}
                       onChange={(e) => updateDescription(tag, e.target.value)}
-                      placeholder={`Describe the "${tag}" behavior for this head...`}
+                      placeholder={`Describe the "${getTagLabel(tag)}" behavior for this head...`}
                       className="min-h-16 resize-none text-sm"
                       style={{
                         borderColor: `${color.badge}40`,

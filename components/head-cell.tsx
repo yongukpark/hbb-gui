@@ -1,7 +1,7 @@
 "use client"
 
 import React, { memo } from "react"
-import { getTagColor } from "@/lib/colors"
+import { getTagColor, getTagLabel } from "@/lib/colors"
 import { useStore } from "@/lib/store"
 import { headKey } from "@/lib/types"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -59,7 +59,7 @@ export const HeadCell = memo(function HeadCell({
           className="text-[10px] font-semibold leading-tight truncate px-0.5 text-center"
           style={{ color: color?.text ?? "currentColor" }}
         >
-          {annotation.tags[0]}
+          {getTagLabel(annotation.tags[0], true)}
         </span>
       )}
     </button>
@@ -88,7 +88,7 @@ export const HeadCell = memo(function HeadCell({
                     className="inline-flex items-center self-start rounded-md px-1.5 py-0.5 text-[10px] font-medium"
                     style={{ backgroundColor: tc.badge, color: tc.badgeText }}
                   >
-                    {tag}
+                    {getTagLabel(tag)}
                   </span>
                   {desc && (
                     <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2 pl-0.5">
