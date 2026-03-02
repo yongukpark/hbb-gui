@@ -89,7 +89,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
   }
 
   return (
-    <div className="flex flex-col h-full border-r border-border bg-card">
+    <div className="flex flex-col h-full min-h-0 border-r border-border bg-card">
       {/* Progress section */}
       <div className="flex flex-col gap-2 px-4 pt-4 pb-3 border-b border-border">
         <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -112,7 +112,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
       </div>
 
       {/* Categories */}
-      <div className="flex flex-col gap-1 px-2 py-3 flex-1 overflow-y-auto">
+      <div className="flex min-h-0 flex-col gap-1 px-2 py-2 flex-1 overflow-y-auto">
         <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground px-2 pb-1">
           Categories
         </span>

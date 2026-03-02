@@ -145,14 +145,14 @@ export function HeadEditDialog({ layer, head, open, onOpenChange }: HeadEditDial
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-                <Command>
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] max-h-[60vh] overflow-hidden p-0" align="start">
+                <Command className="max-h-[60vh]">
                   <CommandInput
                     placeholder="Search or type major/subtopic..."
                     value={newTagInput}
                     onValueChange={setNewTagInput}
                   />
-                  <CommandList>
+                  <CommandList className="max-h-[45vh] overflow-y-auto overscroll-contain">
                     <CommandEmpty>
                       {newTagInput.trim() ? (
                         <button

@@ -18,14 +18,14 @@ function AppContent() {
       />
       <div className="flex flex-1 min-h-0">
         {/* Left sidebar - category list */}
-        <aside className="w-56 flex-shrink-0">
+        <aside className="w-56 flex-shrink-0 min-h-0">
           <CategorySidebar
             filterTag={filterTag}
             onFilterTagChange={setFilterTag}
           />
         </aside>
         {/* Right - grid matrix */}
-        <main className="flex-1 min-w-0">
+        <main className="flex-1 min-w-0 min-h-0">
           <AttentionGrid filterTag={filterTag} searchQuery={searchQuery} />
         </main>
       </div>
