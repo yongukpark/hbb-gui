@@ -20,6 +20,7 @@ export type StoreAction =
   | { type: "SET_ANNOTATION"; key: string; annotation: HeadAnnotation }
   | { type: "DELETE_ANNOTATION"; key: string }
   | { type: "ADD_TAG"; tag: string }
+  | { type: "ADD_SUBTOPIC"; major: string; minor: string }
   | { type: "REMOVE_TAG"; tag: string }
   | { type: "ADD_MAJOR"; major: string }
   | { type: "DELETE_MAJOR"; major: string }

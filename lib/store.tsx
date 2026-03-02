@@ -43,6 +43,31 @@ function normalizeProjectData(data: ProjectData): ProjectData {
       delete ann.description
     }
   }
+
+  // Migrate legacy math tags into a single major group.
+  const LEGACY_MATH_MINOR_TAGS = ["mul", "add", "sub", "arithmetic-progression"] as const
+  const legacyMathSet = new Set<string>(LEGACY_MATH_MINOR_TAGS)
+  const migrateTag = (tag: string): string => (legacyMathSet.has(tag) ? `math/${tag}` : tag)
+
+  data.tags = data.tags.map(migrateTag)
+  if (data.tags.some((tag) => tag.startsWith("math/")) && !data.tags.includes("math")) {
+    data.tags.push("math")
+  }
+  data.tags = data.tags.filter((tag, idx, arr) => arr.indexOf(tag) === idx)
+
+  for (const key of Object.keys(data.annotations)) {
+    const ann = data.annotations[key]
+    const nextTags = ann.tags.map(migrateTag)
+    ann.tags = nextTags.filter((tag, idx) => nextTags.indexOf(tag) === idx)
+
+    const nextDescriptions: Record<string, string> = {}
+    for (const [tag, desc] of Object.entries(ann.descriptions || {})) {
+      const nextTag = migrateTag(tag)
+      if (!nextDescriptions[nextTag]) nextDescriptions[nextTag] = desc
+    }
+    ann.descriptions = nextDescriptions
+  }
+
   rebuildTagColorMap(data.tags)
   return data
 }
@@ -168,6 +193,17 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
     case "ADD_TAG": {
       if (state.tags.includes(action.tag)) return state
       return { ...state, tags: [...state.tags, action.tag], updatedAt: now }
+    }
+    case "ADD_SUBTOPIC": {
+      const major = normalizeCategoryPart(action.major)
+      const minor = normalizeCategoryPart(action.minor)
+      if (!major || !minor) return state
+      const tag = `${major}/${minor}`
+      const nextTags = [...state.tags]
+      if (!nextTags.includes(major)) nextTags.push(major)
+      if (!nextTags.includes(tag)) nextTags.push(tag)
+      if (nextTags.length === state.tags.length) return state
+      return { ...state, tags: nextTags, updatedAt: now }
     }
     case "ADD_MAJOR": {
       const major = normalizeCategoryPart(action.major)

@@ -6,6 +6,16 @@ import { getTagColor, getTagLabel, getTagParts } from "@/lib/colors"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Trash2 } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface CategorySidebarProps {
   filterTag: string | null
@@ -15,8 +25,10 @@ interface CategorySidebarProps {
 export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySidebarProps) {
   const { state, dispatch } = useStore()
   const [newMajorInput, setNewMajorInput] = useState("")
+  const [newSubtopicByMajor, setNewSubtopicByMajor] = useState<Record<string, string>>({})
   const [draggingTag, setDraggingTag] = useState<string | null>(null)
   const [dropTargetMajor, setDropTargetMajor] = useState<string | null>(null)
+  const [majorToDelete, setMajorToDelete] = useState<string | null>(null)
   const annotationCount = useAnnotationCount()
   const totalHeads = state.numLayers * state.numHeads
   const percent = totalHeads > 0 ? Math.round((annotationCount / totalHeads) * 100) : 0
@@ -61,6 +73,13 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
     if (filterTag === `__major__:${major}` || filterTag === major || filterTag?.startsWith(`${major}/`)) {
       onFilterTagChange(null)
     }
+  }
+
+  function createSubtopic(major: string) {
+    const minor = (newSubtopicByMajor[major] || "").trim()
+    if (!minor) return
+    dispatch({ type: "ADD_SUBTOPIC", major, minor })
+    setNewSubtopicByMajor((prev) => ({ ...prev, [major]: "" }))
   }
 
   return (
@@ -193,14 +212,34 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                 </button>
                 <button
                   className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent/50"
-                  onClick={() => {
-                    deleteMajor(major)
-                  }}
+                  onClick={() => setMajorToDelete(major)}
                   type="button"
                   aria-label={`Delete major ${major}`}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
+              </div>
+
+              <div className="ml-4 flex w-[calc(100%-1rem)] items-center gap-1.5 px-3 py-1">
+                <Input
+                  value={newSubtopicByMajor[major] || ""}
+                  onChange={(e) =>
+                    setNewSubtopicByMajor((prev) => ({ ...prev, [major]: e.target.value }))
+                  }
+                  placeholder={`${major} 소주제 추가...`}
+                  className="h-7 text-xs"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") createSubtopic(major)
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2"
+                  onClick={() => createSubtopic(major)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
               </div>
 
               {tags.map((tag) => {
@@ -245,6 +284,31 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
           </p>
         )}
       </div>
+      <AlertDialog open={majorToDelete !== null} onOpenChange={(open) => !open && setMajorToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>대주제 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              {majorToDelete
+                ? `"${majorToDelete}" 대주제와 모든 소주제/태깅이 함께 삭제됩니다. 이 작업은 되돌리기 어렵습니다.`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!majorToDelete) return
+                deleteMajor(majorToDelete)
+                setMajorToDelete(null)
+              }}
+            >
+              삭제 진행
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
