@@ -21,6 +21,9 @@ export type StoreAction =
   | { type: "DELETE_ANNOTATION"; key: string }
   | { type: "ADD_TAG"; tag: string }
   | { type: "REMOVE_TAG"; tag: string }
+  | { type: "ADD_MAJOR"; major: string }
+  | { type: "DELETE_MAJOR"; major: string }
+  | { type: "MOVE_TAG_TO_MAJOR"; tag: string; nextMajor: string }
   | { type: "IMPORT_DATA"; data: ProjectData }
   | { type: "IMPORT_LOCAL_DATA"; data: ProjectData }
   | { type: "RESET" }

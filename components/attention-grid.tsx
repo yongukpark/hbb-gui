@@ -68,6 +68,10 @@ export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
 
   const layers = Array.from({ length: state.numLayers }, (_, i) => i)
   const heads = Array.from({ length: state.numHeads }, (_, i) => i)
+  const forcedDisplayTag =
+    filterTag && filterTag !== "__unannotated__"
+      ? (filterTag.startsWith("__major__:") ? filterTag.slice("__major__:".length) : filterTag)
+      : null
 
   return (
     <>
@@ -129,6 +133,7 @@ export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
                         head={h}
                         isHighlighted={isHighlighted}
                         isDimmed={isDimmed}
+                        forcedTagForDisplay={forcedDisplayTag}
                         onClick={handleCellClick}
                         onHoverChange={handleCellHoverChange}
                       />

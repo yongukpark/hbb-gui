@@ -11,6 +11,7 @@ interface HeadCellProps {
   head: number
   isHighlighted: boolean
   isDimmed: boolean
+  forcedTagForDisplay?: string | null
   onClick: (layer: number, head: number) => void
   onHoverChange?: (layer: number, head: number, active: boolean) => void
 }
@@ -20,6 +21,7 @@ export const HeadCell = memo(function HeadCell({
   head,
   isHighlighted,
   isDimmed,
+  forcedTagForDisplay = null,
   onClick,
   onHoverChange,
 }: HeadCellProps) {
@@ -29,7 +31,8 @@ export const HeadCell = memo(function HeadCell({
   const hasAnnotation = !!annotation && (annotation.tags.length > 0 || Object.keys(annotation.descriptions).length > 0)
 
   const primaryTag = annotation?.tags?.[0]
-  const color = primaryTag ? getTagColor(primaryTag, state.tags) : null
+  const displayTag = forcedTagForDisplay && isHighlighted ? forcedTagForDisplay : primaryTag
+  const color = displayTag ? getTagColor(displayTag, state.tags) : null
 
   const cellContent = (
     <button
@@ -54,12 +57,12 @@ export const HeadCell = memo(function HeadCell({
       }}
       aria-label={`Layer ${layer}, Head ${head}${hasAnnotation ? `, tagged: ${annotation.tags.join(", ")}` : ", empty"}`}
     >
-      {hasAnnotation && annotation.tags.length > 0 && (
+      {hasAnnotation && displayTag && (
         <span
           className="text-[10px] font-semibold leading-tight truncate px-0.5 text-center"
           style={{ color: color?.text ?? "currentColor" }}
         >
-          {getTagLabel(annotation.tags[0], true)}
+          {getTagLabel(displayTag, true)}
         </span>
       )}
     </button>

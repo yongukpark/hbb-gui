@@ -1,8 +1,11 @@
 "use client"
 
-import React, { useMemo } from "react"
+import React, { useMemo, useState } from "react"
 import { useStore, useAnnotationCount } from "@/lib/store"
 import { getTagColor, getTagLabel, getTagParts } from "@/lib/colors"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Plus, Trash2 } from "lucide-react"
 
 interface CategorySidebarProps {
   filterTag: string | null
@@ -10,7 +13,10 @@ interface CategorySidebarProps {
 }
 
 export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySidebarProps) {
-  const { state } = useStore()
+  const { state, dispatch } = useStore()
+  const [newMajorInput, setNewMajorInput] = useState("")
+  const [draggingTag, setDraggingTag] = useState<string | null>(null)
+  const [dropTargetMajor, setDropTargetMajor] = useState<string | null>(null)
   const annotationCount = useAnnotationCount()
   const totalHeads = state.numLayers * state.numHeads
   const percent = totalHeads > 0 ? Math.round((annotationCount / totalHeads) * 100) : 0
@@ -28,16 +34,34 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
   const groupedTags = useMemo(() => {
     const groups: Record<string, string[]> = {}
     for (const tag of state.tags) {
-      const { major } = getTagParts(tag)
+      const { major, minor } = getTagParts(tag)
       if (!groups[major]) groups[major] = []
-      groups[major].push(tag)
+      if (minor) groups[major].push(tag)
     }
     return Object.entries(groups).map(([major, tags]) => ({
       major,
       tags,
-      totalCount: tags.reduce((sum, tag) => sum + (tagCounts[tag] || 0), 0),
+      totalCount: (tagCounts[major] || 0) + tags.reduce((sum, tag) => sum + (tagCounts[tag] || 0), 0),
     }))
   }, [state.tags, tagCounts])
+
+  function normalizeMajor(input: string): string {
+    return input.trim().toLowerCase().replace(/\s+/g, "-")
+  }
+
+  function createMajor() {
+    const major = normalizeMajor(newMajorInput)
+    if (!major) return
+    dispatch({ type: "ADD_MAJOR", major })
+    setNewMajorInput("")
+  }
+
+  function deleteMajor(major: string) {
+    dispatch({ type: "DELETE_MAJOR", major })
+    if (filterTag === `__major__:${major}` || filterTag === major || filterTag?.startsWith(`${major}/`)) {
+      onFilterTagChange(null)
+    }
+  }
 
   return (
     <div className="flex flex-col h-full border-r border-border bg-card">
@@ -101,30 +125,83 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
         {/* Divider */}
         {state.tags.length > 0 && <div className="h-px bg-border mx-2 my-1" />}
 
+        <div className="px-2 pb-2">
+          <div className="flex items-center gap-1.5">
+            <Input
+              value={newMajorInput}
+              onChange={(e) => setNewMajorInput(e.target.value)}
+              placeholder="새 대주제..."
+              className="h-8 text-xs"
+              onKeyDown={(e) => {
+                if (e.key === "Enter") createMajor()
+              }}
+            />
+            <Button size="sm" variant="outline" className="h-8 px-2" onClick={createMajor}>
+              <Plus className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+
         {groupedTags.map(({ major, tags, totalCount }) => {
           const majorFilter = `__major__:${major}`
           const majorColor = getTagColor(major, state.tags)
           const isMajorActive = filterTag === majorFilter
+          const isDropTarget = draggingTag !== null && dropTargetMajor === major
           return (
             <div key={major} className="space-y-0.5">
-              <button
-                onClick={() => onFilterTagChange(isMajorActive ? null : majorFilter)}
+              <div
+                onDragOver={(e) => {
+                  if (!draggingTag) return
+                  e.preventDefault()
+                  setDropTargetMajor(major)
+                }}
+                onDragLeave={() => {
+                  if (dropTargetMajor === major) setDropTargetMajor(null)
+                }}
+                onDrop={(e) => {
+                  e.preventDefault()
+                  if (!draggingTag) return
+                  dispatch({ type: "MOVE_TAG_TO_MAJOR", tag: draggingTag, nextMajor: major })
+                  if (filterTag === draggingTag) {
+                    const movedMinor = getTagParts(draggingTag).minor
+                    onFilterTagChange(movedMinor ? `${major}/${movedMinor}` : null)
+                  }
+                  setDraggingTag(null)
+                  setDropTargetMajor(null)
+                }}
                 className={`
-                  flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-all cursor-pointer
-                  ${isMajorActive ? "font-semibold" : "hover:bg-accent/50 font-medium"}
+                  flex items-center gap-1 rounded-md px-1 py-1 text-sm transition-all
                 `}
                 style={{
-                  backgroundColor: isMajorActive ? majorColor.bg : undefined,
+                  backgroundColor: isDropTarget ? `${majorColor.badge}22` : (isMajorActive ? majorColor.bg : undefined),
                   color: isMajorActive ? majorColor.text : undefined,
                 }}
               >
-                <span
-                  className="h-2.5 w-2.5 rounded-full flex-shrink-0"
-                  style={{ backgroundColor: majorColor.badge }}
-                />
-                <span className="truncate flex-1 text-left">{major}</span>
-                <span className="text-xs font-mono tabular-nums opacity-70">{totalCount}</span>
-              </button>
+                <button
+                  onClick={() => onFilterTagChange(isMajorActive ? null : majorFilter)}
+                  className={`
+                    flex flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-all cursor-pointer
+                    ${isMajorActive ? "font-semibold" : "hover:bg-accent/50 font-medium"}
+                  `}
+                >
+                  <span
+                    className="h-2.5 w-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: majorColor.badge }}
+                  />
+                  <span className="truncate flex-1 text-left">{major}</span>
+                  <span className="text-xs font-mono tabular-nums opacity-70">{totalCount}</span>
+                </button>
+                <button
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent/50"
+                  onClick={() => {
+                    deleteMajor(major)
+                  }}
+                  type="button"
+                  aria-label={`Delete major ${major}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
 
               {tags.map((tag) => {
                 const isActive = filterTag === tag
@@ -134,6 +211,12 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                   <button
                     key={tag}
                     onClick={() => onFilterTagChange(isActive ? null : tag)}
+                    draggable
+                    onDragStart={() => setDraggingTag(tag)}
+                    onDragEnd={() => {
+                      setDraggingTag(null)
+                      setDropTargetMajor(null)
+                    }}
                     className={`
                       ml-4 flex w-[calc(100%-1rem)] items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-all cursor-pointer
                       ${isActive ? "font-medium" : "hover:bg-accent/40"}

@@ -135,6 +135,18 @@ function saveToStorage(data: ProjectData) {
   }
 }
 
+function normalizeCategoryPart(input: string): string {
+  return input.trim().toLowerCase().replace(/\s+/g, "-")
+}
+
+function parseTag(tag: string): { major: string; minor: string | null } {
+  const [majorRaw, ...minorParts] = tag.split("/")
+  const major = normalizeCategoryPart(majorRaw)
+  const minorRaw = minorParts.join("/").trim()
+  const minor = minorRaw ? normalizeCategoryPart(minorRaw) : null
+  return { major, minor }
+}
+
 function reducer(state: ProjectData, action: StoreAction): ProjectData {
   const now = new Date().toISOString()
   switch (action.type) {
@@ -157,10 +169,74 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
       if (state.tags.includes(action.tag)) return state
       return { ...state, tags: [...state.tags, action.tag], updatedAt: now }
     }
+    case "ADD_MAJOR": {
+      const major = normalizeCategoryPart(action.major)
+      if (!major || state.tags.includes(major)) return state
+      return { ...state, tags: [...state.tags, major], updatedAt: now }
+    }
     case "REMOVE_TAG": {
       return {
         ...state,
         tags: state.tags.filter((t) => t !== action.tag),
+        updatedAt: now,
+      }
+    }
+    case "DELETE_MAJOR": {
+      const major = normalizeCategoryPart(action.major)
+      if (!major) return state
+      const removePrefix = `${major}/`
+      const removedTags = new Set(
+        state.tags.filter((tag) => tag === major || tag.startsWith(removePrefix))
+      )
+      if (removedTags.size === 0) return state
+
+      const nextTags = state.tags.filter((tag) => !removedTags.has(tag))
+      const nextAnnotations: ProjectData["annotations"] = {}
+
+      for (const [key, ann] of Object.entries(state.annotations)) {
+        const nextAnnTags = ann.tags.filter((tag) => !removedTags.has(tag))
+        const nextDescriptions: Record<string, string> = {}
+        for (const [tag, desc] of Object.entries(ann.descriptions)) {
+          if (!removedTags.has(tag)) nextDescriptions[tag] = desc
+        }
+        nextAnnotations[key] = { ...ann, tags: nextAnnTags, descriptions: nextDescriptions }
+      }
+
+      return { ...state, tags: nextTags, annotations: nextAnnotations, updatedAt: now }
+    }
+    case "MOVE_TAG_TO_MAJOR": {
+      const { minor } = parseTag(action.tag)
+      const nextMajor = normalizeCategoryPart(action.nextMajor)
+      if (!minor || !nextMajor) return state
+
+      const nextTag = `${nextMajor}/${minor}`
+      if (nextTag === action.tag) return state
+
+      const nextTags = state.tags
+        .filter((tag) => tag !== action.tag)
+        .concat(
+          [nextMajor, nextTag].filter((tag) => tag && !state.tags.includes(tag) && tag !== action.tag)
+        )
+
+      const nextAnnotations: ProjectData["annotations"] = {}
+      for (const [key, ann] of Object.entries(state.annotations)) {
+        const remappedTags = ann.tags.map((tag) => (tag === action.tag ? nextTag : tag))
+        const dedupedTags = remappedTags.filter((tag, idx) => remappedTags.indexOf(tag) === idx)
+        const nextDescriptions: Record<string, string> = {}
+        for (const [tag, desc] of Object.entries(ann.descriptions)) {
+          if (tag === action.tag) {
+            if (!nextDescriptions[nextTag]) nextDescriptions[nextTag] = desc
+          } else {
+            nextDescriptions[tag] = desc
+          }
+        }
+        nextAnnotations[key] = { ...ann, tags: dedupedTags, descriptions: nextDescriptions }
+      }
+
+      return {
+        ...state,
+        tags: nextTags,
+        annotations: nextAnnotations,
         updatedAt: now,
       }
     }
