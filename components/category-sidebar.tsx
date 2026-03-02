@@ -121,7 +121,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
         <button
           onClick={() => onFilterTagChange(null)}
           className={`
-            flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors cursor-pointer
+            flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors duration-75 cursor-pointer
             ${filterTag === null
               ? "bg-accent text-accent-foreground font-medium"
               : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -136,7 +136,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
         <button
           onClick={() => onFilterTagChange("__unannotated__")}
           className={`
-            flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors cursor-pointer
+            flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors duration-75 cursor-pointer
             ${filterTag === "__unannotated__"
               ? "bg-accent text-accent-foreground font-medium"
               : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
@@ -202,7 +202,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                   setDropTargetMajor(null)
                 }}
                 className={`
-                  flex items-center gap-1 rounded-md px-1 py-1 text-sm transition-all
+                  flex items-center gap-1 rounded-md px-1 py-1 text-sm transition-colors duration-75
                 `}
                 style={{
                   backgroundColor: isDropTarget ? `${majorColor.badge}22` : (isMajorActive ? majorColor.bg : undefined),
@@ -212,7 +212,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                 <button
                   onClick={() => onFilterTagChange(isMajorActive ? null : majorFilter)}
                   className={`
-                    min-w-0 flex flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-all cursor-pointer
+                    min-w-0 flex flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-colors duration-75 cursor-pointer
                     ${isMajorActive ? "font-semibold" : "hover:bg-accent/50 font-medium"}
                   `}
                 >
@@ -287,7 +287,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                         setDropTargetMajor(null)
                       }}
                       className={`
-                        min-w-0 flex flex-1 items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-all cursor-pointer
+                        min-w-0 flex flex-1 items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-colors duration-75 cursor-pointer
                         ${isActive ? "font-medium" : "hover:bg-accent/40"}
                       `}
                       style={{
