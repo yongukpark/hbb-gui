@@ -17,7 +17,7 @@ export function Toolbar({ searchQuery, onSearchQueryChange }: ToolbarProps) {
   const importJson = useImportJson()
 
   return (
-    <div className="flex items-center justify-between gap-3 border-b border-border bg-card px-3 py-1.5">
+    <div className="flex items-center justify-between gap-2 border-b border-border bg-card px-3 py-1">
       <div className="flex items-center gap-3">
         <h1 className="text-sm font-semibold font-mono text-foreground tracking-tight">
           {state.modelName}
@@ -29,13 +29,13 @@ export function Toolbar({ searchQuery, onSearchQueryChange }: ToolbarProps) {
 
       <div className="flex items-center gap-2">
         {/* Search */}
-        <div className="relative w-52">
+        <div className="relative w-48">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
             placeholder="Search descriptions..."
-            className="h-8 pl-8 text-xs"
+            className="h-7 pl-8 text-xs"
           />
           {searchQuery && (
             <button

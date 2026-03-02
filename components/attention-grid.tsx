@@ -5,7 +5,6 @@ import { useStore } from "@/lib/store"
 import { headKey } from "@/lib/types"
 import { HeadCell } from "@/components/head-cell"
 import { HeadEditDialog } from "@/components/head-edit-dialog"
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { getTagParts } from "@/lib/colors"
 
 interface AttentionGridProps {
@@ -75,77 +74,79 @@ export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
 
   return (
     <>
-      <ScrollArea className="w-full flex-1">
-        <div className="px-2 py-1.5">
-          {/* Column headers */}
-          <div
-            className="grid gap-px mb-0.5"
-            style={{
-              gridTemplateColumns: `36px repeat(${state.numHeads}, minmax(0, 1fr))`,
-            }}
-          >
-            <div />
-            {heads.map((h) => (
-              <div
-                key={h}
-                className={`
-                  flex items-center justify-center text-[10px] font-mono py-0.5 rounded-sm transition-colors
-                  ${hoverTarget?.head === h ? "bg-accent/40 text-foreground" : "text-muted-foreground"}
-                `}
-              >
-                H{h}
-              </div>
-            ))}
-          </div>
-
-          {/* Grid rows */}
-          <div className="flex flex-col gap-px">
-            {layers.map((l) => (
-              <div
-                key={l}
-                className="grid gap-px"
-                style={{
-                  gridTemplateColumns: `36px repeat(${state.numHeads}, minmax(0, 1fr))`,
-                }}
-              >
-                {/* Row label */}
-                <div className="flex items-center justify-end pr-1.5">
-                  <span
-                    className={`
-                      text-[10px] font-mono rounded-sm px-1 py-[1px] transition-colors
-                      ${hoverTarget?.layer === l ? "bg-accent/40 text-foreground" : "text-muted-foreground"}
-                    `}
-                  >
-                    L{l}
-                  </span>
-                </div>
-                {/* Cells */}
-                {heads.map((h) => {
-                  const key = headKey(l, h)
-                  const isHighlighted = matchingKeys !== null && matchingKeys.has(key)
-                  const isDimmed =
-                    matchingKeys !== null &&
-                    !matchingKeys.has(key)
-                  return (
-                    <div key={h} className="aspect-[2.25/1] min-h-[22px]">
-                      <HeadCell
-                        layer={l}
-                        head={h}
-                        isHighlighted={isHighlighted}
-                        isDimmed={isDimmed}
-                        forcedTagForDisplay={forcedDisplayTag}
-                        onClick={handleCellClick}
-                        onHoverChange={handleCellHoverChange}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
+      <div className="w-full h-full min-h-0 overflow-hidden px-1.5 py-1">
+        {/* Column headers */}
+        <div
+          className="grid gap-px mb-0.5"
+          style={{
+            gridTemplateColumns: `30px repeat(${state.numHeads}, minmax(0, 1fr))`,
+          }}
+        >
+          <div />
+          {heads.map((h) => (
+            <div
+              key={h}
+              className={`
+                flex items-center justify-center text-[11px] font-mono py-0.5 rounded-sm transition-colors
+                ${hoverTarget?.head === h ? "bg-accent/40 text-foreground" : "text-muted-foreground"}
+              `}
+            >
+              H{h}
+            </div>
+          ))}
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+
+        {/* Grid rows */}
+        <div
+          className="grid h-[calc(100%-20px)] min-h-0 gap-px"
+          style={{
+            gridTemplateRows: `repeat(${state.numLayers}, minmax(0, 1fr))`,
+          }}
+        >
+          {layers.map((l) => (
+            <div
+              key={l}
+              className="grid min-h-0 gap-px"
+              style={{
+                gridTemplateColumns: `30px repeat(${state.numHeads}, minmax(0, 1fr))`,
+              }}
+            >
+              {/* Row label */}
+              <div className="flex items-center justify-end pr-1">
+                <span
+                  className={`
+                    text-[11px] font-mono rounded-sm px-1 py-[1px] transition-colors
+                    ${hoverTarget?.layer === l ? "bg-accent/40 text-foreground" : "text-muted-foreground"}
+                  `}
+                >
+                  L{l}
+                </span>
+              </div>
+              {/* Cells */}
+              {heads.map((h) => {
+                const key = headKey(l, h)
+                const isHighlighted = matchingKeys !== null && matchingKeys.has(key)
+                const isDimmed =
+                  matchingKeys !== null &&
+                  !matchingKeys.has(key)
+                return (
+                  <div key={h} className="min-h-0">
+                    <HeadCell
+                      layer={l}
+                      head={h}
+                      isHighlighted={isHighlighted}
+                      isDimmed={isDimmed}
+                      forcedTagForDisplay={forcedDisplayTag}
+                      onClick={handleCellClick}
+                      onHoverChange={handleCellHoverChange}
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <HeadEditDialog
         layer={editTarget?.layer ?? null}

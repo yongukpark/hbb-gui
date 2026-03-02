@@ -59,7 +59,7 @@ export const HeadCell = memo(function HeadCell({
     >
       {hasAnnotation && displayTag && (
         <span
-          className="text-[10px] font-semibold leading-tight truncate px-0.5 text-center"
+          className="text-[11px] font-semibold leading-tight truncate px-0.5 text-center"
           style={{ color: color?.text ?? "currentColor" }}
         >
           {getTagLabel(displayTag, true)}
