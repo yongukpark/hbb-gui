@@ -29,6 +29,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
   const [draggingTag, setDraggingTag] = useState<string | null>(null)
   const [dropTargetMajor, setDropTargetMajor] = useState<string | null>(null)
   const [majorToDelete, setMajorToDelete] = useState<string | null>(null)
+  const [subtopicToDelete, setSubtopicToDelete] = useState<string | null>(null)
   const annotationCount = useAnnotationCount()
   const totalHeads = state.numLayers * state.numHeads
   const percent = totalHeads > 0 ? Math.round((annotationCount / totalHeads) * 100) : 0
@@ -211,7 +212,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                 <button
                   onClick={() => onFilterTagChange(isMajorActive ? null : majorFilter)}
                   className={`
-                    flex flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-all cursor-pointer
+                    min-w-0 flex flex-1 items-center gap-2.5 rounded-md px-2 py-1.5 text-sm transition-all cursor-pointer
                     ${isMajorActive ? "font-semibold" : "hover:bg-accent/50 font-medium"}
                   `}
                 >
@@ -219,8 +220,8 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                     className="h-2.5 w-2.5 rounded-full flex-shrink-0"
                     style={{ backgroundColor: majorColor.badge }}
                   />
-                  <span className="truncate flex-1 text-left">{major}</span>
-                  <span className="text-xs font-mono tabular-nums opacity-70">{totalCount}</span>
+                  <span className="min-w-0 truncate flex-1 text-left" title={major}>{major}</span>
+                  <span className="shrink-0 text-xs font-mono tabular-nums opacity-70">{totalCount}</span>
                 </button>
                 <button
                   className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent/50"
@@ -272,7 +273,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                 const color = getTagColor(tag, state.tags)
                 const count = tagCounts[tag] || 0
                 return (
-                  <div key={tag} className="ml-4 flex w-[calc(100%-1rem)] items-center gap-1">
+                  <div key={tag} className="ml-4 flex w-[calc(100%-1rem)] min-w-0 items-center gap-1">
                     <button
                       onClick={() => onFilterTagChange(isActive ? null : tag)}
                       draggable
@@ -286,7 +287,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                         setDropTargetMajor(null)
                       }}
                       className={`
-                        flex flex-1 items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-all cursor-pointer
+                        min-w-0 flex flex-1 items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-all cursor-pointer
                         ${isActive ? "font-medium" : "hover:bg-accent/40"}
                       `}
                       style={{
@@ -298,12 +299,14 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                         className="h-2 w-2 rounded-full flex-shrink-0"
                         style={{ backgroundColor: color.badge }}
                       />
-                      <span className="truncate flex-1 text-left">{getTagLabel(tag, true)}</span>
-                      <span className="text-xs font-mono tabular-nums opacity-70">{count}</span>
+                      <span className="min-w-0 truncate flex-1 text-left" title={getTagLabel(tag, true)}>
+                        {getTagLabel(tag, true)}
+                      </span>
+                      <span className="shrink-0 text-xs font-mono tabular-nums opacity-70">{count}</span>
                     </button>
                     <button
                       type="button"
-                      onClick={() => deleteSubtopic(tag)}
+                      onClick={() => setSubtopicToDelete(tag)}
                       className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent/50"
                       aria-label={`Delete subtopic ${getTagLabel(tag)}`}
                     >
@@ -340,6 +343,31 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                 if (!majorToDelete) return
                 deleteMajor(majorToDelete)
                 setMajorToDelete(null)
+              }}
+            >
+              삭제 진행
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={subtopicToDelete !== null} onOpenChange={(open) => !open && setSubtopicToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>소주제 삭제 확인</AlertDialogTitle>
+            <AlertDialogDescription>
+              {subtopicToDelete
+                ? `"${getTagLabel(subtopicToDelete)}" 소주제 태깅과 설명이 함께 삭제됩니다. 계속할까요?`
+                : ""}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>취소</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!subtopicToDelete) return
+                deleteSubtopic(subtopicToDelete)
+                setSubtopicToDelete(null)
               }}
             >
               삭제 진행
