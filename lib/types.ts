@@ -21,6 +21,7 @@ export type StoreAction =
   | { type: "DELETE_ANNOTATION"; key: string }
   | { type: "ADD_TAG"; tag: string }
   | { type: "ADD_SUBTOPIC"; major: string; minor: string }
+  | { type: "DELETE_SUBTOPIC"; tag: string }
   | { type: "REMOVE_TAG"; tag: string }
   | { type: "ADD_MAJOR"; major: string }
   | { type: "DELETE_MAJOR"; major: string }

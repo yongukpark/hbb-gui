@@ -44,7 +44,7 @@ function normalizeProjectData(data: ProjectData): ProjectData {
     }
   }
 
-  // Migrate legacy math tags into a single major group.
+  // 1) Migrate legacy math tags into a single major group.
   const LEGACY_MATH_MINOR_TAGS = ["mul", "add", "sub", "arithmetic-progression"] as const
   const legacyMathSet = new Set<string>(LEGACY_MATH_MINOR_TAGS)
   const migrateTag = (tag: string): string => (legacyMathSet.has(tag) ? `math/${tag}` : tag)
@@ -66,6 +66,39 @@ function normalizeProjectData(data: ProjectData): ProjectData {
       if (!nextDescriptions[nextTag]) nextDescriptions[nextTag] = desc
     }
     ann.descriptions = nextDescriptions
+  }
+
+  // 2) Move everything except math under uncategorized/*.
+  const UNCATEGORIZED_MAJOR = "uncategorized"
+  const remapNonMathTag = (tag: string): string => {
+    const { major, minor } = parseTag(tag)
+    if (!major) return tag
+    if (major === "math") return minor ? `math/${minor}` : "math"
+    if (major === UNCATEGORIZED_MAJOR) return minor ? `${UNCATEGORIZED_MAJOR}/${minor}` : UNCATEGORIZED_MAJOR
+    const leaf = minor || major
+    return `${UNCATEGORIZED_MAJOR}/${leaf}`
+  }
+
+  data.tags = data.tags.map(remapNonMathTag)
+  if (data.tags.some((tag) => tag.startsWith("math/")) && !data.tags.includes("math")) {
+    data.tags.push("math")
+  }
+  if (data.tags.some((tag) => tag.startsWith(`${UNCATEGORIZED_MAJOR}/`)) && !data.tags.includes(UNCATEGORIZED_MAJOR)) {
+    data.tags.push(UNCATEGORIZED_MAJOR)
+  }
+  data.tags = data.tags.filter((tag, idx, arr) => arr.indexOf(tag) === idx)
+
+  for (const key of Object.keys(data.annotations)) {
+    const ann = data.annotations[key]
+    const remappedTags = ann.tags.map(remapNonMathTag)
+    ann.tags = remappedTags.filter((tag, idx) => remappedTags.indexOf(tag) === idx)
+
+    const remappedDescriptions: Record<string, string> = {}
+    for (const [tag, desc] of Object.entries(ann.descriptions || {})) {
+      const nextTag = remapNonMathTag(tag)
+      if (!remappedDescriptions[nextTag]) remappedDescriptions[nextTag] = desc
+    }
+    ann.descriptions = remappedDescriptions
   }
 
   rebuildTagColorMap(data.tags)
@@ -204,6 +237,26 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
       if (!nextTags.includes(tag)) nextTags.push(tag)
       if (nextTags.length === state.tags.length) return state
       return { ...state, tags: nextTags, updatedAt: now }
+    }
+    case "DELETE_SUBTOPIC": {
+      const tag = normalizeCategoryPart(action.tag)
+      const parsed = parseTag(tag)
+      if (!parsed.major || !parsed.minor) return state
+      if (!state.tags.includes(tag)) return state
+
+      const nextTags = state.tags.filter((t) => t !== tag)
+      const nextAnnotations: ProjectData["annotations"] = {}
+
+      for (const [key, ann] of Object.entries(state.annotations)) {
+        const nextAnnTags = ann.tags.filter((t) => t !== tag)
+        const nextDescriptions: Record<string, string> = {}
+        for (const [descTag, desc] of Object.entries(ann.descriptions)) {
+          if (descTag !== tag) nextDescriptions[descTag] = desc
+        }
+        nextAnnotations[key] = { ...ann, tags: nextAnnTags, descriptions: nextDescriptions }
+      }
+
+      return { ...state, tags: nextTags, annotations: nextAnnotations, updatedAt: now }
     }
     case "ADD_MAJOR": {
       const major = normalizeCategoryPart(action.major)

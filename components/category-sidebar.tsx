@@ -82,6 +82,11 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
     setNewSubtopicByMajor((prev) => ({ ...prev, [major]: "" }))
   }
 
+  function deleteSubtopic(tag: string) {
+    dispatch({ type: "DELETE_SUBTOPIC", tag })
+    if (filterTag === tag) onFilterTagChange(null)
+  }
+
   return (
     <div className="flex flex-col h-full border-r border-border bg-card">
       {/* Progress section */}
@@ -267,31 +272,44 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                 const color = getTagColor(tag, state.tags)
                 const count = tagCounts[tag] || 0
                 return (
-                  <button
-                    key={tag}
-                    onClick={() => onFilterTagChange(isActive ? null : tag)}
-                    draggable
-                    onDragStart={() => setDraggingTag(tag)}
-                    onDragEnd={() => {
-                      setDraggingTag(null)
-                      setDropTargetMajor(null)
-                    }}
-                    className={`
-                      ml-4 flex w-[calc(100%-1rem)] items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-all cursor-pointer
-                      ${isActive ? "font-medium" : "hover:bg-accent/40"}
-                    `}
-                    style={{
-                      backgroundColor: isActive ? color.bg : undefined,
-                      color: isActive ? color.text : undefined,
-                    }}
-                  >
-                    <span
-                      className="h-2 w-2 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: color.badge }}
-                    />
-                    <span className="truncate flex-1 text-left">{getTagLabel(tag, true)}</span>
-                    <span className="text-xs font-mono tabular-nums opacity-70">{count}</span>
-                  </button>
+                  <div key={tag} className="ml-4 flex w-[calc(100%-1rem)] items-center gap-1">
+                    <button
+                      onClick={() => onFilterTagChange(isActive ? null : tag)}
+                      draggable
+                      onDragStart={(e) => {
+                        setDraggingTag(tag)
+                        e.dataTransfer.setData("text/plain", tag)
+                        e.dataTransfer.effectAllowed = "move"
+                      }}
+                      onDragEnd={() => {
+                        setDraggingTag(null)
+                        setDropTargetMajor(null)
+                      }}
+                      className={`
+                        flex flex-1 items-center gap-2.5 rounded-md px-3 py-1.5 text-sm transition-all cursor-pointer
+                        ${isActive ? "font-medium" : "hover:bg-accent/40"}
+                      `}
+                      style={{
+                        backgroundColor: isActive ? color.bg : undefined,
+                        color: isActive ? color.text : undefined,
+                      }}
+                    >
+                      <span
+                        className="h-2 w-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: color.badge }}
+                      />
+                      <span className="truncate flex-1 text-left">{getTagLabel(tag, true)}</span>
+                      <span className="text-xs font-mono tabular-nums opacity-70">{count}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteSubtopic(tag)}
+                      className="inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground hover:text-destructive hover:bg-accent/50"
+                      aria-label={`Delete subtopic ${getTagLabel(tag)}`}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 )
               })}
             </div>
