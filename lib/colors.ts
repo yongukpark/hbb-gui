@@ -24,7 +24,14 @@ const TAG_PALETTE: BaseColor[] = [
   { text: "#06b6d4", badge: "#06b6d4", rgb: [6, 182, 212] },       // cyan
 ]
 
-const SUBTOPIC_SHADE_FACTORS = [0.05, 0.12, 0.2, 0.28, 0.36, 0.44]
+const SUBTOPIC_VARIANTS = [
+  { tone: "light", amount: 0.46, bgAlpha: 0.11 },
+  { tone: "light", amount: 0.34, bgAlpha: 0.14 },
+  { tone: "light", amount: 0.22, bgAlpha: 0.17 },
+  { tone: "light", amount: 0.12, bgAlpha: 0.2 },
+  { tone: "dark", amount: 0.08, bgAlpha: 0.22 },
+  { tone: "dark", amount: 0.16, bgAlpha: 0.25 },
+] as const
 
 interface ParsedTag {
   major: string
@@ -48,6 +55,24 @@ function mixTowardWhite(rgb: [number, number, number], amount: number): string {
   const nb = Math.round(b + (255 - b) * amount)
   const toHex = (n: number) => n.toString(16).padStart(2, "0")
   return `#${toHex(nr)}${toHex(ng)}${toHex(nb)}`
+}
+
+function mixTowardBlack(rgb: [number, number, number], amount: number): string {
+  const [r, g, b] = rgb
+  const nr = Math.round(r * (1 - amount))
+  const ng = Math.round(g * (1 - amount))
+  const nb = Math.round(b * (1 - amount))
+  const toHex = (n: number) => n.toString(16).padStart(2, "0")
+  return `#${toHex(nr)}${toHex(ng)}${toHex(nb)}`
+}
+
+function pickReadableText(hexColor: string): "#fff" | "#111827" {
+  const hex = hexColor.replace("#", "")
+  const r = Number.parseInt(hex.slice(0, 2), 16)
+  const g = Number.parseInt(hex.slice(2, 4), 16)
+  const b = Number.parseInt(hex.slice(4, 6), 16)
+  const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255
+  return luminance > 0.62 ? "#111827" : "#fff"
 }
 
 function toBg(rgb: [number, number, number], alpha: number): string {
@@ -104,12 +129,17 @@ export function getTagColor(tag: string, allTags: string[]): TagColor {
   }
 
   const minorIdx = findMinorIndexWithinMajor(tag, allTags)
-  const factor = SUBTOPIC_SHADE_FACTORS[minorIdx % SUBTOPIC_SHADE_FACTORS.length]
+  const variant = SUBTOPIC_VARIANTS[minorIdx % SUBTOPIC_VARIANTS.length]
+  const badge =
+    variant.tone === "light"
+      ? mixTowardWhite(base.rgb, variant.amount)
+      : mixTowardBlack(base.rgb, variant.amount)
+
   return {
-    bg: toBg(base.rgb, 0.12 + factor * 0.2),
+    bg: toBg(base.rgb, variant.bgAlpha),
     text: base.text,
-    badge: mixTowardWhite(base.rgb, factor),
-    badgeText: "#fff",
+    badge,
+    badgeText: pickReadableText(badge),
   }
 }
 

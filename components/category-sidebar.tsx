@@ -3,9 +3,8 @@
 import React, { useMemo, useState } from "react"
 import { useStore, useAnnotationCount } from "@/lib/store"
 import { getTagColor, getTagLabel, getTagParts } from "@/lib/colors"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Plus, Trash2 } from "lucide-react"
+import { Plus, Trash2, FolderPlus, PlusCircle } from "lucide-react"
+import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +25,7 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
   const { state, dispatch } = useStore()
   const [newMajorInput, setNewMajorInput] = useState("")
   const [newSubtopicByMajor, setNewSubtopicByMajor] = useState<Record<string, string>>({})
+  const [subtopicEditorMajor, setSubtopicEditorMajor] = useState<string | null>(null)
   const [draggingTag, setDraggingTag] = useState<string | null>(null)
   const [dropTargetMajor, setDropTargetMajor] = useState<string | null>(null)
   const [majorToDelete, setMajorToDelete] = useState<string | null>(null)
@@ -144,21 +144,28 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
         {/* Divider */}
         {state.tags.length > 0 && <div className="h-px bg-border mx-2 my-1" />}
 
-        <div className="px-2 pb-2">
-          <div className="flex items-center gap-1.5">
-            <Input
+        <div className="mx-1 mb-2 rounded-lg border border-border/80 bg-muted/30 p-2">
+          <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+            <FolderPlus className="h-3.5 w-3.5" />
+            <span>New Major</span>
+          </div>
+          <InputGroup className="h-9 bg-background">
+            <InputGroupInput
               value={newMajorInput}
               onChange={(e) => setNewMajorInput(e.target.value)}
-              placeholder="새 대주제..."
-              className="h-8 text-xs"
+              placeholder="대주제 이름 입력"
+              className="text-sm"
               onKeyDown={(e) => {
                 if (e.key === "Enter") createMajor()
               }}
             />
-            <Button size="sm" variant="outline" className="h-8 px-2" onClick={createMajor}>
-              <Plus className="h-3.5 w-3.5" />
-            </Button>
-          </div>
+            <InputGroupAddon align="inline-end">
+              <InputGroupButton size="xs" variant="secondary" onClick={createMajor}>
+                <Plus className="h-3.5 w-3.5" />
+                추가
+              </InputGroupButton>
+            </InputGroupAddon>
+          </InputGroup>
         </div>
 
         {groupedTags.map(({ major, tags, totalCount }) => {
@@ -218,29 +225,42 @@ export function CategorySidebar({ filterTag, onFilterTagChange }: CategorySideba
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
+                <button
+                  className="inline-flex h-7 items-center gap-1 rounded-sm px-2 text-xs text-muted-foreground hover:text-foreground hover:bg-accent/50"
+                  onClick={() =>
+                    setSubtopicEditorMajor((prev) => (prev === major ? null : major))
+                  }
+                  type="button"
+                  aria-label={`Add subtopic in ${major}`}
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  소주제
+                </button>
               </div>
 
-              <div className="ml-4 flex w-[calc(100%-1rem)] items-center gap-1.5 px-3 py-1">
-                <Input
-                  value={newSubtopicByMajor[major] || ""}
-                  onChange={(e) =>
-                    setNewSubtopicByMajor((prev) => ({ ...prev, [major]: e.target.value }))
-                  }
-                  placeholder={`${major} 소주제 추가...`}
-                  className="h-7 text-xs"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") createSubtopic(major)
-                  }}
-                />
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-7 px-2"
-                  onClick={() => createSubtopic(major)}
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+              {subtopicEditorMajor === major && (
+                <div className="ml-4 w-[calc(100%-1rem)] px-3 py-1">
+                  <InputGroup className="h-8 bg-background/90">
+                    <InputGroupInput
+                      value={newSubtopicByMajor[major] || ""}
+                      onChange={(e) =>
+                        setNewSubtopicByMajor((prev) => ({ ...prev, [major]: e.target.value }))
+                      }
+                      placeholder={`${major} / 소주제`}
+                      className="text-xs"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") createSubtopic(major)
+                      }}
+                    />
+                    <InputGroupAddon align="inline-end">
+                      <InputGroupButton size="xs" variant="secondary" onClick={() => createSubtopic(major)}>
+                        <Plus className="h-3.5 w-3.5" />
+                        생성
+                      </InputGroupButton>
+                    </InputGroupAddon>
+                  </InputGroup>
+                </div>
+              )}
 
               {tags.map((tag) => {
                 const isActive = filterTag === tag
