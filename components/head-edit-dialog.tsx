@@ -251,7 +251,7 @@ export function HeadEditDialog({ layer, head, open, onOpenChange }: HeadEditDial
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSave} disabled={selectedTags.length === 0}>
+            <Button onClick={handleSave}>
               Save
             </Button>
           </div>

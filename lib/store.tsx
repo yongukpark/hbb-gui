@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useReducer, useCallback, useEffect, useRef } from "react"
-import type { ProjectData, StoreAction } from "./types"
+import type { HeadAnnotation, ProjectData, StoreAction } from "./types"
 import { rebuildTagColorMap } from "./colors"
 
 const NUM_LAYERS = 24
@@ -67,6 +67,8 @@ function normalizeProjectData(data: ProjectData): ProjectData {
     }
     ann.descriptions = nextDescriptions
   }
+
+  data.annotations = pruneEmptyAnnotations(data.annotations)
 
   rebuildTagColorMap(data.tags)
   return data
@@ -172,11 +174,31 @@ function parseTag(tag: string): { major: string; minor: string | null } {
   return { major, minor }
 }
 
+function isAnnotationEmpty(annotation: HeadAnnotation | null | undefined): boolean {
+  if (!annotation) return true
+  return annotation.tags.length === 0 && Object.keys(annotation.descriptions || {}).length === 0
+}
+
+function pruneEmptyAnnotations(
+  annotations: ProjectData["annotations"],
+): ProjectData["annotations"] {
+  const next: ProjectData["annotations"] = {}
+  for (const [key, ann] of Object.entries(annotations)) {
+    if (!isAnnotationEmpty(ann)) next[key] = ann
+  }
+  return next
+}
+
 function reducer(state: ProjectData, action: StoreAction): ProjectData {
   const now = new Date().toISOString()
   switch (action.type) {
     case "SET_ANNOTATION": {
-      const newAnnotations = { ...state.annotations, [action.key]: action.annotation }
+      const newAnnotations = { ...state.annotations }
+      if (isAnnotationEmpty(action.annotation)) {
+        delete newAnnotations[action.key]
+      } else {
+        newAnnotations[action.key] = action.annotation
+      }
       // Collect any new tags
       const newTags = [...state.tags]
       for (const tag of action.annotation.tags) {
@@ -220,7 +242,8 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
         for (const [descTag, desc] of Object.entries(ann.descriptions)) {
           if (descTag !== tag) nextDescriptions[descTag] = desc
         }
-        nextAnnotations[key] = { ...ann, tags: nextAnnTags, descriptions: nextDescriptions }
+        const nextAnn = { ...ann, tags: nextAnnTags, descriptions: nextDescriptions }
+        if (!isAnnotationEmpty(nextAnn)) nextAnnotations[key] = nextAnn
       }
 
       return { ...state, tags: nextTags, annotations: nextAnnotations, updatedAt: now }
@@ -231,9 +254,21 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
       return { ...state, tags: [...state.tags, major], updatedAt: now }
     }
     case "REMOVE_TAG": {
+      const tag = normalizeCategoryPart(action.tag)
+      const nextAnnotations: ProjectData["annotations"] = {}
+      for (const [key, ann] of Object.entries(state.annotations)) {
+        const nextAnnTags = ann.tags.filter((t) => t !== tag)
+        const nextDescriptions: Record<string, string> = {}
+        for (const [descTag, desc] of Object.entries(ann.descriptions)) {
+          if (descTag !== tag) nextDescriptions[descTag] = desc
+        }
+        const nextAnn = { ...ann, tags: nextAnnTags, descriptions: nextDescriptions }
+        if (!isAnnotationEmpty(nextAnn)) nextAnnotations[key] = nextAnn
+      }
       return {
         ...state,
         tags: state.tags.filter((t) => t !== action.tag),
+        annotations: nextAnnotations,
         updatedAt: now,
       }
     }
@@ -255,7 +290,8 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
         for (const [tag, desc] of Object.entries(ann.descriptions)) {
           if (!removedTags.has(tag)) nextDescriptions[tag] = desc
         }
-        nextAnnotations[key] = { ...ann, tags: nextAnnTags, descriptions: nextDescriptions }
+        const nextAnn = { ...ann, tags: nextAnnTags, descriptions: nextDescriptions }
+        if (!isAnnotationEmpty(nextAnn)) nextAnnotations[key] = nextAnn
       }
 
       return { ...state, tags: nextTags, annotations: nextAnnotations, updatedAt: now }
@@ -297,16 +333,24 @@ function reducer(state: ProjectData, action: StoreAction): ProjectData {
       }
     }
     case "IMPORT_DATA": {
-      rebuildTagColorMap(action.data.tags)
-      return {
+      const nextData = {
         ...action.data,
-        updatedAt: action.data.updatedAt || now,
-        createdAt: action.data.createdAt || now,
+        annotations: pruneEmptyAnnotations(action.data.annotations),
+      }
+      rebuildTagColorMap(nextData.tags)
+      return {
+        ...nextData,
+        updatedAt: nextData.updatedAt || now,
+        createdAt: nextData.createdAt || now,
       }
     }
     case "IMPORT_LOCAL_DATA": {
-      rebuildTagColorMap(action.data.tags)
-      return { ...action.data, updatedAt: now, createdAt: action.data.createdAt || now }
+      const nextData = {
+        ...action.data,
+        annotations: pruneEmptyAnnotations(action.data.annotations),
+      }
+      rebuildTagColorMap(nextData.tags)
+      return { ...nextData, updatedAt: now, createdAt: nextData.createdAt || now }
     }
     case "RESET": {
       rebuildTagColorMap([])
@@ -505,7 +549,7 @@ export function useStore() {
 
 export function useAnnotationCount() {
   const { state } = useStore()
-  return Object.keys(state.annotations).length
+  return Object.values(state.annotations).filter((ann) => !isAnnotationEmpty(ann)).length
 }
 
 export function useExportJson() {
