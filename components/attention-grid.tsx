@@ -65,7 +65,7 @@ export function AttentionGrid({ filterTag, searchQuery }: AttentionGridProps) {
     return matches
   }, [filterTag, searchQuery, state.annotations, state.numLayers, state.numHeads])
 
-  const layers = Array.from({ length: state.numLayers }, (_, i) => i)
+  const layers = Array.from({ length: state.numLayers }, (_, i) => state.numLayers - 1 - i)
   const heads = Array.from({ length: state.numHeads }, (_, i) => i)
   const forcedDisplayTag =
     filterTag && filterTag !== "__unannotated__"
