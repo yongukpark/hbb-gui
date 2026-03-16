@@ -1,0 +1,535 @@
+{
+  "modelName": "Pythia-1.4B",
+  "numLayers": 24,
+  "numHeads": 16,
+  "annotations": {
+    "L15H7": {
+      "layer": 15,
+      "head": 7,
+      "tags": [
+        "country/capital",
+        "country/country_name",
+        "computer/port_number",
+        "country/university"
+      ],
+      "descriptions": {
+        "country/capital": "strongly related to the capital (1)",
+        "country/country_name": "strongly related to the country_name (1)",
+        "computer/port_number": "weakly related to object-function(3)",
+        "country/university": "strongly related to object-function(1)"
+      }
+    },
+    "L17H6": {
+      "layer": 17,
+      "head": 6,
+      "tags": [
+        "country/capital",
+        "country/language",
+        "country/country_name",
+        "country/university"
+      ],
+      "descriptions": {
+        "country/capital": "strongly related to the capital (2)",
+        "country/language": "strongly related to the language (1)",
+        "country/country_name": "weakly related to the country_name (2)",
+        "country/university": "strongly related to object-function(2)"
+      }
+    },
+    "L13H6": {
+      "layer": 13,
+      "head": 6,
+      "tags": [
+        "science/chemical-symbols",
+        "math/arithmatic-progression",
+        "grammar/find_subject"
+      ],
+      "descriptions": {
+        "science/chemical-symbols": "strongly related to chemical-symbols (1)",
+        "math/arithmatic-progression": "strongly related to (2)",
+        "grammar/find_subject": "strongly related to find subject (3)"
+      }
+    },
+    "L12H0": {
+      "layer": 12,
+      "head": 0,
+      "tags": [
+        "grammar/order",
+        "math/arithmatic-progression",
+        "math/add"
+      ],
+      "descriptions": {
+        "grammar/order": "strongly related to sequencing (1)",
+        "math/arithmatic-progression": "strongly related to (1)",
+        "math/add": "strongly related to add(1)"
+      }
+    },
+    "L13H2": {
+      "layer": 13,
+      "head": 2,
+      "tags": [
+        "grammar/opposite"
+      ],
+      "descriptions": {
+        "grammar/opposite": "strongly related with opposite (1)"
+      }
+    },
+    "L22H2": {
+      "layer": 22,
+      "head": 2,
+      "tags": [
+        "science/chemical-symbols",
+        "math/add",
+        "math/mul",
+        "country/iso_code",
+        "computer/file_extension",
+        "grammar/find_subject",
+        "grammar/find_verb",
+        "country/university",
+        "medical/disease-organ",
+        "translation/eng-german",
+        "translation/eng-italian",
+        "translation/eng-spanish",
+        "law/versus",
+        "uncategorized/induction_head",
+        "uncategorized/ioi"
+      ],
+      "descriptions": {
+        "science/chemical-symbols": "weakly related to chemical symbols (2)",
+        "math/add": "weakly related to add(2)",
+        "math/mul": "weakly related to mul(2)",
+        "country/iso_code": "strongly related to ISO_CODE (1)",
+        "computer/file_extension": "strongly related to file_extension (1)",
+        "grammar/find_subject": "strongly related to find subject (1)",
+        "grammar/find_verb": "strongly related to find verb (1)",
+        "country/university": "weakly related to object-function (3)",
+        "medical/disease-organ": "weakly related to disease-organ (2)",
+        "translation/eng-german": "strongly related to eng-german translation (2)",
+        "translation/eng-italian": "strongly related to eng-italian translation (1)",
+        "translation/eng-spanish": "strongly related to eng-spanish translation (1)",
+        "law/versus": "weakly related to law versus pair (1)",
+        "uncategorized/induction_head": "strongly related to induction_head (3)",
+        "uncategorized/ioi": "strongly related to indirect object identification (1)"
+      }
+    },
+    "L17H0": {
+      "layer": 17,
+      "head": 0,
+      "tags": [
+        "country/capital",
+        "uncategorized/ioi"
+      ],
+      "descriptions": {
+        "country/capital": "weakly related to the capital (3)",
+        "uncategorized/ioi": "strongly related to indirect object identification (2)"
+      }
+    },
+    "L14H12": {
+      "layer": 14,
+      "head": 12,
+      "tags": [
+        "grammar/opposite"
+      ],
+      "descriptions": {
+        "grammar/opposite": "weakly related to the opposite (2)"
+      }
+    },
+    "L22H0": {
+      "layer": 22,
+      "head": 0,
+      "tags": [
+        "grammar/opposite",
+        "grammar/find_verb"
+      ],
+      "descriptions": {
+        "grammar/opposite": "weakly related to the capital (3)",
+        "grammar/find_verb": "strongly related to find verb (3)"
+      }
+    },
+    "L19H5": {
+      "layer": 19,
+      "head": 5,
+      "tags": [
+        "country/country_name"
+      ],
+      "descriptions": {
+        "country/country_name": "weakly related to the country_name (3)"
+      }
+    },
+    "L12H15": {
+      "layer": 12,
+      "head": 15,
+      "tags": [
+        "math/mul",
+        "grammar/past",
+        "grammar/find_verb"
+      ],
+      "descriptions": {
+        "math/mul": "weakly related to mul(1)",
+        "grammar/past": "strongly related to past (1)",
+        "grammar/find_verb": "strongly related to find verb (2)"
+      }
+    },
+    "L14H2": {
+      "layer": 14,
+      "head": 2,
+      "tags": [
+        "uncategorized/historical_year"
+      ],
+      "descriptions": {
+        "uncategorized/historical_year": "weakly related to historical_year(1)"
+      }
+    },
+    "L13H13": {
+      "layer": 13,
+      "head": 13,
+      "tags": [
+        "feelings/negative",
+        "feelings/positive"
+      ],
+      "descriptions": {
+        "feelings/negative": "weakly related to negative feelings(1)",
+        "feelings/positive": "weakly related to positive feelings(3)"
+      }
+    },
+    "L16H4": {
+      "layer": 16,
+      "head": 4,
+      "tags": [
+        "feelings/positive"
+      ],
+      "descriptions": {
+        "feelings/positive": "weakly related to positive feelings"
+      }
+    },
+    "L18H2": {
+      "layer": 18,
+      "head": 2,
+      "tags": [
+        "feelings/positive"
+      ],
+      "descriptions": {
+        "feelings/positive": "weakly related to positive feelings(2)"
+      }
+    },
+    "L12H8": {
+      "layer": 12,
+      "head": 8,
+      "tags": [
+        "uncategorized/object-function",
+        "translation/eng-chinese",
+        "science/unit",
+        "grammar/active_passive"
+      ],
+      "descriptions": {
+        "uncategorized/object-function": "weakly related to object-function(2)",
+        "translation/eng-chinese": "weakly related to eng-chinese translation (2)",
+        "science/unit": "strongly related to unit (2)",
+        "grammar/active_passive": "strongly related to active_passive (1)"
+      }
+    },
+    "L11H1": {
+      "layer": 11,
+      "head": 1,
+      "tags": [
+        "uncategorized/object-function",
+        "medical/sympytom-disease",
+        "translation/eng-french",
+        "translation/eng-german",
+        "food/taste",
+        "food/nutrient"
+      ],
+      "descriptions": {
+        "uncategorized/object-function": "weakly related to object-function(3)",
+        "medical/sympytom-disease": "weakly related to symptom-disease (3)",
+        "translation/eng-french": "strongly related to eng-chinese translation (1)",
+        "translation/eng-german": "strongly related to eng-german translation (1)",
+        "food/taste": "strongly related to taste (2)",
+        "food/nutrient": "strongly related to the nutrient (2)"
+      }
+    },
+    "L14H5": {
+      "layer": 14,
+      "head": 5,
+      "tags": [
+        "computer/http_error_code",
+        "uncategorized/object-function",
+        "computer/port_number",
+        "music/instruments",
+        "medical/sympytom-disease",
+        "translation/eng-chinese",
+        "science/unit"
+      ],
+      "descriptions": {
+        "computer/http_error_code": "strongly related to http_error_code (1)",
+        "uncategorized/object-function": "strongly related to object-function(1)",
+        "computer/port_number": "strongly related to port number(1)",
+        "music/instruments": "strongly related to musical instruments (2)",
+        "medical/sympytom-disease": "strongly related to symptom-disease (1)",
+        "translation/eng-chinese": "strongly related to eng-chinese translation (1)",
+        "science/unit": "strongly related to unit (1)"
+      }
+    },
+    "L15H6": {
+      "layer": 15,
+      "head": 6,
+      "tags": [
+        "computer/port_number"
+      ],
+      "descriptions": {
+        "computer/port_number": "strongly related to object-function(2)"
+      }
+    },
+    "L23H2": {
+      "layer": 23,
+      "head": 2,
+      "tags": [
+        "grammar/past"
+      ],
+      "descriptions": {
+        "grammar/past": "strongly related to past (1)"
+      }
+    },
+    "L22H9": {
+      "layer": 22,
+      "head": 9,
+      "tags": [
+        "grammar/past"
+      ],
+      "descriptions": {
+        "grammar/past": "strongly related to past (2)"
+      }
+    },
+    "L18H8": {
+      "layer": 18,
+      "head": 8,
+      "tags": [
+        "music/instruments"
+      ],
+      "descriptions": {
+        "music/instruments": "strongly related to musical instruments (1)"
+      }
+    },
+    "L17H7": {
+      "layer": 17,
+      "head": 7,
+      "tags": [
+        "grammar/find_subject"
+      ],
+      "descriptions": {
+        "grammar/find_subject": "strongly related to find subject (1)"
+      }
+    },
+    "L21H10": {
+      "layer": 21,
+      "head": 10,
+      "tags": [
+        "job/workplace",
+        "animals/taxonomy"
+      ],
+      "descriptions": {
+        "job/workplace": "strongly related to the workplace (2)",
+        "animals/taxonomy": "strongly related to animal taxonomy (3)"
+      }
+    },
+    "L23H9": {
+      "layer": 23,
+      "head": 9,
+      "tags": [
+        "job/workplace",
+        "law/us_amendments"
+      ],
+      "descriptions": {
+        "job/workplace": "strongly related to the workplace (3)",
+        "law/us_amendments": "weakly related to us_amendments (1)"
+      }
+    },
+    "L16H1": {
+      "layer": 16,
+      "head": 1,
+      "tags": [
+        "job/workplace"
+      ],
+      "descriptions": {
+        "job/workplace": "strongly related to the workplace (1)"
+      }
+    },
+    "L15H13": {
+      "layer": 15,
+      "head": 13,
+      "tags": [
+        "medical/disease-organ",
+        "medical/sympytom-disease",
+        "medical/specialty"
+      ],
+      "descriptions": {
+        "medical/disease-organ": "strongly related to disease-organ (1)",
+        "medical/sympytom-disease": "strongly related to symptom-disease (2)",
+        "medical/specialty": "strongly related to specialty (1)"
+      }
+    },
+    "L19H2": {
+      "layer": 19,
+      "head": 2,
+      "tags": [
+        "translation/eng-chinese"
+      ],
+      "descriptions": {
+        "translation/eng-chinese": "weakly related to eng-chinese translation (3)"
+      }
+    },
+    "L23H13": {
+      "layer": 23,
+      "head": 13,
+      "tags": [
+        "translation/eng-french"
+      ],
+      "descriptions": {
+        "translation/eng-french": "weakly related to eng-french translation (2)"
+      }
+    },
+    "L16H6": {
+      "layer": 16,
+      "head": 6,
+      "tags": [
+        "translation/eng-german",
+        "grammar/active_passive"
+      ],
+      "descriptions": {
+        "translation/eng-german": "weakly related to eng-german translation (3)",
+        "grammar/active_passive": "strongly related to active_passive (3)"
+      }
+    },
+    "L18H4": {
+      "layer": 18,
+      "head": 4,
+      "tags": [
+        "science/unit",
+        "grammar/active_passive"
+      ],
+      "descriptions": {
+        "science/unit": "strongly related to unit (3)",
+        "grammar/active_passive": "strongly related to active_passive (2)"
+      }
+    },
+    "L14H7": {
+      "layer": 14,
+      "head": 7,
+      "tags": [
+        "food/taste"
+      ],
+      "descriptions": {
+        "food/taste": "strongly related to the taste (1)"
+      }
+    },
+    "L10H0": {
+      "layer": 10,
+      "head": 0,
+      "tags": [
+        "uncategorized/induction_head"
+      ],
+      "descriptions": {
+        "uncategorized/induction_head": "strongly related to induction_head (1)"
+      }
+    },
+    "L15H11": {
+      "layer": 15,
+      "head": 11,
+      "tags": [
+        "uncategorized/induction_head"
+      ],
+      "descriptions": {
+        "uncategorized/induction_head": "strongly related to induction_head (2)"
+      }
+    },
+    "L15H15": {
+      "layer": 15,
+      "head": 15,
+      "tags": [
+        "uncategorized/ioi"
+      ],
+      "descriptions": {
+        "uncategorized/ioi": "strongly related to indirect object identification (3)"
+      }
+    },
+    "L16H2": {
+      "layer": 16,
+      "head": 2,
+      "tags": [
+        "food/nutrient",
+        "animals/taxonomy"
+      ],
+      "descriptions": {
+        "food/nutrient": "strongly related to the nutrient (1)",
+        "animals/taxonomy": "strongly related to animal taxonomy (1)"
+      }
+    },
+    "L16H15": {
+      "layer": 16,
+      "head": 15,
+      "tags": [
+        "animals/taxonomy"
+      ],
+      "descriptions": {
+        "animals/taxonomy": "strongly related to animal taxonomy (2)"
+      }
+    }
+  },
+  "tags": [
+    "math",
+    "uncategorized",
+    "math/arithmatic-progression",
+    "country",
+    "country/capital",
+    "country/language",
+    "country/country_name",
+    "math/add",
+    "math/mul",
+    "uncategorized/historical_year",
+    "feelings",
+    "feelings/negative",
+    "feelings/positive",
+    "uncategorized/object-function",
+    "computer",
+    "computer/http_error_code",
+    "country/iso_code",
+    "computer/file_extension",
+    "computer/port_number",
+    "music",
+    "grammar",
+    "grammar/order",
+    "grammar/opposite",
+    "grammar/past",
+    "music/instruments",
+    "grammar/find_subject",
+    "grammar/find_verb",
+    "job",
+    "job/workplace",
+    "country/university",
+    "medical",
+    "medical/disease-organ",
+    "medical/sympytom-disease",
+    "translation",
+    "translation/eng-chinese",
+    "translation/eng-french",
+    "translation/eng-italian",
+    "translation/eng-german",
+    "translation/eng-spanish",
+    "law",
+    "law/us_amendments",
+    "law/versus",
+    "science",
+    "science/chemical-symbols",
+    "science/unit",
+    "grammar/active_passive",
+    "food",
+    "food/taste",
+    "medical/specialty",
+    "uncategorized/induction_head",
+    "uncategorized/ioi",
+    "food/nutrient",
+    "animals",
+    "animals/taxonomy"
+  ],
+  "createdAt": "2026-02-25T16:30:32.502Z",
+  "updatedAt": "2026-03-13T04:37:48.692Z"
+}
