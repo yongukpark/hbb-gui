@@ -10,13 +10,17 @@
         "country/capital",
         "country/country_name",
         "computer/port_number",
-        "country/university"
+        "country/university",
+        "food/ingredient",
+        "sports/stadium_location"
       ],
       "descriptions": {
         "country/capital": "strongly related to the capital (1)",
         "country/country_name": "strongly related to the country_name (1)",
         "computer/port_number": "weakly related to object-function(3)",
-        "country/university": "strongly related to object-function(1)"
+        "country/university": "strongly related to object-function(1)",
+        "food/ingredient": "strongly related to the ingredient (1)",
+        "sports/stadium_location": "strongly related to stadium locations (2)"
       }
     },
     "L17H6": {
@@ -26,13 +30,15 @@
         "country/capital",
         "country/language",
         "country/country_name",
-        "country/university"
+        "country/university",
+        "sports/stadium_location"
       ],
       "descriptions": {
         "country/capital": "strongly related to the capital (2)",
         "country/language": "strongly related to the language (1)",
         "country/country_name": "weakly related to the country_name (2)",
-        "country/university": "strongly related to object-function(2)"
+        "country/university": "strongly related to object-function(2)",
+        "sports/stadium_location": "strongly related to stadium locations (1)"
       }
     },
     "L13H6": {
@@ -67,10 +73,12 @@
       "layer": 13,
       "head": 2,
       "tags": [
-        "grammar/opposite"
+        "grammar/opposite",
+        "gender/opposite_gender"
       ],
       "descriptions": {
-        "grammar/opposite": "strongly related with opposite (1)"
+        "grammar/opposite": "strongly related with opposite (1)",
+        "gender/opposite_gender": "strongly related with opposite_gender (1)"
       }
     },
     "L22H2": {
@@ -91,7 +99,8 @@
         "translation/eng-spanish",
         "law/versus",
         "uncategorized/induction_head",
-        "uncategorized/ioi"
+        "uncategorized/ioi",
+        "grammar/plural"
       ],
       "descriptions": {
         "science/chemical-symbols": "weakly related to chemical symbols (2)",
@@ -108,7 +117,8 @@
         "translation/eng-spanish": "strongly related to eng-spanish translation (1)",
         "law/versus": "weakly related to law versus pair (1)",
         "uncategorized/induction_head": "strongly related to induction_head (3)",
-        "uncategorized/ioi": "strongly related to indirect object identification (1)"
+        "uncategorized/ioi": "strongly related to indirect object identification (1)",
+        "grammar/plural": "strongly related with plural (2)"
       }
     },
     "L17H0": {
@@ -236,7 +246,8 @@
         "translation/eng-french",
         "translation/eng-german",
         "food/taste",
-        "food/nutrient"
+        "food/nutrient",
+        "food/ingredient"
       ],
       "descriptions": {
         "uncategorized/object-function": "weakly related to object-function(3)",
@@ -244,7 +255,8 @@
         "translation/eng-french": "strongly related to eng-chinese translation (1)",
         "translation/eng-german": "strongly related to eng-german translation (1)",
         "food/taste": "strongly related to taste (2)",
-        "food/nutrient": "strongly related to the nutrient (2)"
+        "food/nutrient": "strongly related to the nutrient (2)",
+        "food/ingredient": "strongly related to the ingredient (2)"
       }
     },
     "L14H5": {
@@ -257,7 +269,9 @@
         "music/instruments",
         "medical/sympytom-disease",
         "translation/eng-chinese",
-        "science/unit"
+        "science/unit",
+        "animals/habitat",
+        "universe/celestial_object"
       ],
       "descriptions": {
         "computer/http_error_code": "strongly related to http_error_code (1)",
@@ -266,7 +280,9 @@
         "music/instruments": "strongly related to musical instruments (2)",
         "medical/sympytom-disease": "strongly related to symptom-disease (1)",
         "translation/eng-chinese": "strongly related to eng-chinese translation (1)",
-        "science/unit": "strongly related to unit (1)"
+        "science/unit": "strongly related to unit (1)",
+        "animals/habitat": "strongly related to the habitat (1)",
+        "universe/celestial_object": "strongly related to the celestial objects (1)"
       }
     },
     "L15H6": {
@@ -303,10 +319,12 @@
       "layer": 18,
       "head": 8,
       "tags": [
-        "music/instruments"
+        "music/instruments",
+        "sports/worldclass"
       ],
       "descriptions": {
-        "music/instruments": "strongly related to musical instruments (1)"
+        "music/instruments": "strongly related to musical instruments (1)",
+        "sports/worldclass": "strongly related to the world-class (1)"
       }
     },
     "L17H7": {
@@ -324,11 +342,13 @@
       "head": 10,
       "tags": [
         "job/workplace",
-        "animals/taxonomy"
+        "animals/taxonomy",
+        "animals/habitat"
       ],
       "descriptions": {
         "job/workplace": "strongly related to the workplace (2)",
-        "animals/taxonomy": "strongly related to animal taxonomy (3)"
+        "animals/taxonomy": "strongly related to animal taxonomy (3)",
+        "animals/habitat": "strongly related to the habitat (2)"
       }
     },
     "L23H9": {
@@ -336,21 +356,25 @@
       "head": 9,
       "tags": [
         "job/workplace",
-        "law/us_amendments"
+        "law/us_amendments",
+        "grammar/plural"
       ],
       "descriptions": {
         "job/workplace": "strongly related to the workplace (3)",
-        "law/us_amendments": "weakly related to us_amendments (1)"
+        "law/us_amendments": "weakly related to us_amendments (1)",
+        "grammar/plural": "strongly related with plural (3)"
       }
     },
     "L16H1": {
       "layer": 16,
       "head": 1,
       "tags": [
-        "job/workplace"
+        "job/workplace",
+        "gender/opposite_gender"
       ],
       "descriptions": {
-        "job/workplace": "strongly related to the workplace (1)"
+        "job/workplace": "strongly related to the workplace (1)",
+        "gender/opposite_gender": "strongly related with opposite_gender (2)"
       }
     },
     "L15H13": {
@@ -381,10 +405,12 @@
       "layer": 23,
       "head": 13,
       "tags": [
-        "translation/eng-french"
+        "translation/eng-french",
+        "food/ingredient"
       ],
       "descriptions": {
-        "translation/eng-french": "weakly related to eng-french translation (2)"
+        "translation/eng-french": "weakly related to eng-french translation (2)",
+        "food/ingredient": "strongly related to the ingredient (3)"
       }
     },
     "L16H6": {
@@ -467,10 +493,22 @@
       "layer": 16,
       "head": 15,
       "tags": [
-        "animals/taxonomy"
+        "animals/taxonomy",
+        "animals/habitat"
       ],
       "descriptions": {
-        "animals/taxonomy": "strongly related to animal taxonomy (2)"
+        "animals/taxonomy": "strongly related to animal taxonomy (2)",
+        "animals/habitat": "strongly related to the habitat (2)"
+      }
+    },
+    "L20H6": {
+      "layer": 20,
+      "head": 6,
+      "tags": [
+        "grammar/plural"
+      ],
+      "descriptions": {
+        "grammar/plural": "strongly related with plural (1)"
       }
     }
   },
@@ -528,8 +566,18 @@
     "uncategorized/ioi",
     "food/nutrient",
     "animals",
-    "animals/taxonomy"
+    "animals/taxonomy",
+    "food/ingredient",
+    "animals/habitat",
+    "universe",
+    "universe/celestial_object",
+    "sports",
+    "sports/stadium_location",
+    "sports/worldclass",
+    "gender",
+    "gender/opposite_gender",
+    "grammar/plural"
   ],
   "createdAt": "2026-02-25T16:30:32.502Z",
-  "updatedAt": "2026-03-13T04:37:48.692Z"
+  "updatedAt": "2026-03-17T05:29:52.380Z"
 }
